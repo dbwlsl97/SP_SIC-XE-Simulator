@@ -1,8 +1,10 @@
 package SP18_simulator;
 
-import java.awt.EventQueue;
 import java.io.File;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.event.*;
 import java.awt.*;
 
@@ -15,7 +17,7 @@ public class VisualSimulator {
 	ResourceManager resourceManager = new ResourceManager();
 	SicLoader sicLoader = new SicLoader(resourceManager);
 	SicSimulator sicSimulator = new SicSimulator(resourceManager);
-
+	MyFrame myframe = new MyFrame();
 	/**
 	 * 프로그램 로드 명령을 전달한다.
 	 */
@@ -48,21 +50,8 @@ public class VisualSimulator {
 	
 
 	public static void main(String[] args) {
-		MainFrame myFrame = new MainFrame();
+
 	}
 }
-class MainFrame extends JFrame {
-	public  MainFrame() {
-		setSize(300, 200);
-		setTitle("SIC/XE Simulator");		
-		setVisible(true);
-	    setLayout(new FlowLayout());//기본설정BoderLayout 에서 FlowLayout으로 변경
-	    JButton button = new JButton("버튼");
-	    this.add(button);
-	    setVisible(true);
-	}
 
-
-
-}
 
