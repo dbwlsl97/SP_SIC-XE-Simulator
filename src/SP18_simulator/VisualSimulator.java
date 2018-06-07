@@ -5,6 +5,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.awt.event.*;
 import java.awt.*;
 
@@ -74,6 +76,11 @@ class MyFrame extends JFrame {
 		JMenu mFile = new JMenu("File");
 		menuBar.add(mFile);
 		
+		JMenuItem miOpen = new JMenuItem("Open");
+		miOpen.addActionListener(new OpenActionListener());
+		mFile.add(miOpen);
+		
+		
 		JMenu mAbout = new JMenu("About");
 		menuBar.add(mAbout);
 		contentPane = new JPanel();
@@ -92,6 +99,7 @@ class MyFrame extends JFrame {
 		tfName.setColumns(10);
 		
 		JButton bFopen = new JButton("open");
+		bFopen.addActionListener(new OpenActionListener());
 		bFopen.setFont(new Font("굴림", Font.PLAIN, 12));
 		bFopen.setBounds(215, 6, 65, 23);
 		contentPane.add(bFopen);
@@ -361,6 +369,11 @@ class MyFrame extends JFrame {
 		contentPane.add(btRunall);
 		
 		JButton btExit = new JButton("종료");
+		btExit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				System.exit(0);
+			}
+		});
 		btExit.setFont(new Font("굴림", Font.PLAIN, 12));
 		btExit.setBounds(384, 442, 103, 23);
 		contentPane.add(btExit);
@@ -381,6 +394,26 @@ class MyFrame extends JFrame {
 		contentPane.add(listLog);
 
 	}
+	class OpenActionListener implements ActionListener {
+		JFileChooser chooser = new JFileChooser();
+		OpenActionListener(){
+			chooser = new JFileChooser();
+		}
+		public void actionPerformed(ActionEvent arg0) {
+			FileNameExtensionFilter filter = new FileNameExtensionFilter(
+					"Object File(*.obj)", "obj");
+			chooser.setFileFilter(filter);
+			int isOpen = chooser.showOpenDialog(null);
+			if(isOpen != JFileChooser.APPROVE_OPTION){
+				JOptionPane.showMessageDialog(null, "파일을 선택하지 않았습니다.", "경고", JOptionPane.WARNING_MESSAGE);
+				
+				return;
+			}
+			String filePath = chooser.getSelectedFile().getPath();
+
+		}
+	}
+	
 }
 
 
