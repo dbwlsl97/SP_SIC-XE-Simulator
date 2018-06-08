@@ -33,7 +33,9 @@ public class ResourceManager{
 	char[] memory = new char[65536]; // String으로 수정해서 사용하여도 무방함.
 	int[] register = new int[10];
 	double register_F;
-	
+	ArrayList<String> progName = new ArrayList<String>();
+	ArrayList<String> progLength = new ArrayList<String>();
+	ArrayList<String> startADDR = new ArrayList<String>();
 	SymbolTable symtabList;
 	// 이외에도 필요한 변수 선언해서 사용할 것.
 
@@ -138,5 +140,22 @@ public class ResourceManager{
 	 */
 	public int byteToInt(byte[] data){
 		return 0;
+	}
+
+	public void setProgname(String name, int currentSection) {
+		progName.add(name);
+//		 TODO Auto-generated method stub
+	}
+
+	public void setProgLength(String length, int currentSection) {
+		// TODO Auto-generated method stub
+		progLength.add(length);
+
+	}
+
+	public void setStartADDR(int startaddr) {
+		System.out.println(startaddr);
+		// TODO Auto-generated method stub
+		
 	}
 }

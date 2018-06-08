@@ -17,7 +17,7 @@ import java.io.File;
  */
 public class SicSimulator {
 	ResourceManager rMgr;
-
+	
 	public SicSimulator(ResourceManager resourceManager) {
 		// 필요하다면 초기화 과정 추가
 		this.rMgr = resourceManager;
@@ -29,6 +29,7 @@ public class SicSimulator {
 	 */
 	public void load(File program) {
 		/* 메모리 초기화, 레지스터 초기화 등*/
+		
 	}
 
 	/**
