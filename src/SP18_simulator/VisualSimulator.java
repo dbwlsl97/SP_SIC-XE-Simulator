@@ -57,7 +57,7 @@ public class VisualSimulator {
 	}
 }
 class MyFrame extends JFrame {
-
+	VisualSimulator visual = new VisualSimulator();
 	private JPanel contentPane;
 	private JTextField tfName, tfpName, tfHaddr, tfpLength;
 	private JTextField aDec, aHex, xDec, xHex, lDec, lHex, pcDec, pcHex, tfSW;
@@ -410,7 +410,7 @@ class MyFrame extends JFrame {
 				return;
 			}
 			String filePath = chooser.getSelectedFile().getPath();
-
+			visual.load(chooser.getSelectedFile());
 		}
 	}
 	

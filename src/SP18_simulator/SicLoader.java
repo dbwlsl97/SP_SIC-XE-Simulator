@@ -1,6 +1,11 @@
 package SP18_simulator;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * SicLoader는 프로그램을 해석해서 메모리에 올리는 역할을 수행한다. 이 과정에서 linker의 역할 또한 수행한다. 
@@ -32,6 +37,20 @@ public class SicLoader {
 	 * @param objectCode 읽어들인 파일
 	 */
 	public void load(File objectCode){
+		 
+		    BufferedReader br = null;
+		    try{
+		      br = new BufferedReader(new InputStreamReader(new FileInputStream(objectCode)));
+		      String line;
+		      while((line = br.readLine()) != null){
+		    	  System.out.println(line);
+		      }
+		    } catch (FileNotFoundException e) {
+		      e.printStackTrace();
+		    } catch (IOException e) {
+		      e.printStackTrace();
+		    }
+
 
 	};
 	
