@@ -63,6 +63,7 @@ class MyFrame extends JFrame {
 	private JTextField aDec, aHex, xDec, xHex, lDec, lHex, pcDec, pcHex, tfSW;
 	private JTextField bDec, bHex, sDec, sHex, tDec, tHex, fDec, fHex;
 	private JTextField tfEAddr, tfSaddrM, tfTaddr, tfDevice;
+	private JButton btRunstep,btRunall;
 
 	public MyFrame() {
 		this.setResizable(false);
@@ -116,6 +117,7 @@ class MyFrame extends JFrame {
 		pHeader.add(lbPname);
 		
 		tfpName = new JTextField();
+//		tfpName.setText();
 		tfpName.setBounds(118, 17, 88, 21);
 		pHeader.add(tfpName);
 		tfpName.setColumns(10);
@@ -356,13 +358,25 @@ class MyFrame extends JFrame {
 		tfDevice.setBounds(397, 254, 61, 20);
 		contentPane.add(tfDevice);
 		
-		JButton btRunstep = new JButton("실행(1 Step)");
+		btRunstep = new JButton("실행(1 Step)");
+		btRunstep.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				visual.oneStep();
+				visual.update();
+			}
+		});
 		btRunstep.setFont(new Font("굴림", Font.PLAIN, 12));
 		btRunstep.setEnabled(false);
 		btRunstep.setBounds(384, 376, 103, 23);
 		contentPane.add(btRunstep);
 		
-		JButton btRunall = new JButton("실행(All)");
+		btRunall = new JButton("실행(All)");
+		btRunall.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				visual.allStep();
+				visual.update();
+			}
+		});
 		btRunall.setFont(new Font("굴림", Font.PLAIN, 12));
 		btRunall.setEnabled(false);
 		btRunall.setBounds(384, 409, 103, 23);
@@ -405,12 +419,19 @@ class MyFrame extends JFrame {
 			chooser.setFileFilter(filter);
 			int isOpen = chooser.showOpenDialog(null);
 			if(isOpen != JFileChooser.APPROVE_OPTION){
-				JOptionPane.showMessageDialog(null, "파일을 선택하지 않았습니다.", "경고", JOptionPane.WARNING_MESSAGE);
-				
+				JOptionPane.showMessageDialog(null, "파일을 선택하지 않았습니다.", "경고", JOptionPane.WARNING_MESSAGE);	
 				return;
 			}
 			String filePath = chooser.getSelectedFile().getPath();
 			visual.load(chooser.getSelectedFile());
+			openUpdate();
+		}
+		void openUpdate(){
+			tfName.setText(chooser.getSelectedFile().getName());
+			if(tfName.getText()!="\0") {
+				btRunstep.setEnabled(true);
+				btRunall.setEnabled(true);
+			}
 		}
 	}
 	

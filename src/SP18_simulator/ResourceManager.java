@@ -35,8 +35,7 @@ public class ResourceManager{
 	double register_F;
 	ArrayList<String> progName = new ArrayList<String>();
 	ArrayList<String> progLength = new ArrayList<String>();
-	ArrayList<String> startADDR = new ArrayList<String>();
-	SymbolTable symtabList;
+	ArrayList<Integer> startAddr = new ArrayList<Integer>();
 	// 이외에도 필요한 변수 선언해서 사용할 것.
 
 	/**
@@ -154,7 +153,8 @@ public class ResourceManager{
 	}
 
 	public void setStartADDR(int startaddr) {
-		System.out.println(startaddr);
+//		System.out.println(startaddr);
+		startAddr.add(startaddr);
 		// TODO Auto-generated method stub
 		
 	}

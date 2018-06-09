@@ -9,7 +9,10 @@ public class SymbolTable {
 	ArrayList<String> symbolList;
 	ArrayList<Integer> addressList;
 	// 기타 literal, external 선언 및 처리방법을 구현한다.
-	
+	public SymbolTable() {
+		symbolList = new ArrayList<String>();
+		addressList = new ArrayList<Integer>();
+	}
 
 	/**
 	 * 새로운 Symbol을 table에 추가한다.
@@ -20,8 +23,9 @@ public class SymbolTable {
 	 * 매칭되는 주소값의 변경은 modifySymbol()을 통해서 이루어져야 한다.
 	 */
 	public void putSymbol(String symbol, int address) {
-		
-	}
+		symbolList.add(symbol);
+		addressList.add(address);
+		}
 	
 	/**
 	 * 기존에 존재하는 symbol 값에 대해서 가리키는 주소값을 변경한다.
@@ -29,7 +33,15 @@ public class SymbolTable {
 	 * @param newaddress : 새로 바꾸고자 하는 주소값
 	 */
 	public void modifySymbol(String symbol, int newaddress) {
-		
+		if(search(symbol)!=-1) {
+//			lit = symbol.split("'"); //리터럴이라면 '을 기준으로 분리하고
+			for(int i=0;i<symbolList.size();i++) { 
+				if(symbol.equals(symbolList.get(i))) //현재 심볼이 심볼리스트에 있다면 변경해주기
+				addressList.set(i, newaddress);	
+					
+				}
+			
+			}
 	}
 	
 	/**
@@ -39,9 +51,18 @@ public class SymbolTable {
 	 */
 	public int search(String symbol) {
 		int address = 0;
-		//...
+		if(symbolList.contains(symbol)) { //심볼테이블에 현재 심볼이 존재한다면
+			for(int i=0;i<symbolList.size();i++) {
+				if(symbol.equals(symbolList.get(i))) { 
+					address = addressList.get(i);		// 주소를 리턴			
+				}
+			}
+		}
+		else {
+			return -1;
+		}
 		return address;
-	}
+	}	
 	
 	
 	
