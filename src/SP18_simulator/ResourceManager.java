@@ -42,7 +42,10 @@ public class ResourceManager{
 	 * 메모리, 레지스터등 가상 리소스들을 초기화한다.
 	 */
 	public void initializeResource(){
-		
+		for(int i=0;i<register.length;i++) {
+			register[i] = 0;
+		}
+		register_F = 0;
 	}
 	
 	/**
@@ -89,8 +92,8 @@ public class ResourceManager{
 	 * @param num 데이터 개수
 	 * @return 가져오는 데이터
 	 */
-	public char[] getMemory(int location, int num){
-		return null;
+	public char getMemory(int location){
+		return	memory[location];
 		
 	}
 
@@ -100,8 +103,8 @@ public class ResourceManager{
 	 * @param data 저장하려는 데이터
 	 * @param num 저장하는 데이터의 개수
 	 */
-	public void setMemory(int locate, char[] data, int num){
-
+	public void setMemory(int locate, char data){
+		memory[locate] = data;
 	}
 
 	/**

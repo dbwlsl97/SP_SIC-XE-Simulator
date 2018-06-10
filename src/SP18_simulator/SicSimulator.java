@@ -28,14 +28,17 @@ public class SicSimulator {
 	 * 단, object code의 메모리 적재 및 해석은 SicLoader에서 수행하도록 한다. 
 	 */
 	public void load(File program) {
+		String inst = "";
 		/* 메모리 초기화, 레지스터 초기화 등*/
-		
+		rMgr.initializeResource();
+
 	}
 
 	/**
 	 * 1개의 instruction이 수행된 모습을 보인다. 
 	 */
 	public void oneStep() {
+		
 	}
 	
 	/**

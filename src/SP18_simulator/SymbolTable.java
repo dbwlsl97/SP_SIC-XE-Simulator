@@ -55,11 +55,12 @@ public class SymbolTable {
 			for(int i=0;i<symbolList.size();i++) {
 				if(symbol.equals(symbolList.get(i))) { 
 					address = addressList.get(i);		// 주소를 리턴			
+					break;
 				}
 			}
 		}
 		else {
-			return -1;
+			address = -1;
 		}
 		return address;
 	}	

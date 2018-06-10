@@ -19,6 +19,8 @@ import java.util.*;
 public class SicLoader {
 	ResourceManager rMgr;
 	SymbolTable symtab;
+	ArrayList<String> mcode = new ArrayList<String>();
+	ArrayList<Integer> section = new ArrayList<Integer>();
 	public SicLoader(ResourceManager resourceManager) {
 		// 필요하다면 초기화
 		setResourceManager(resourceManager);
@@ -57,7 +59,7 @@ public class SicLoader {
 				    	rMgr.setProgname(name[0], currentSection);
 				    	rMgr.setProgLength(name[1].substring(6), currentSection);
 				    	if(currentSection!=0) {
-				    	rMgr.setStartADDR(Integer.parseInt(rMgr.progLength.get(currentSection),16)+secaddr);
+				    		rMgr.setStartADDR(Integer.parseInt(name[1].substring(0, 6),16)+secaddr);
 				    	}
 				    	else {
 				    		rMgr.setStartADDR(Integer.parseInt(name[1].substring(0,6)));
@@ -69,14 +71,8 @@ public class SicLoader {
 				    		symtab.putSymbol(define[i], Integer.parseInt(define[i+1],16));
 				    		i+=2;
 				    	}
-				    	break;
-				    case 'E':
-				    	secaddr += Integer.parseInt(rMgr.progLength.get(currentSection),16);
-				    	currentSection++;
-				    	break;
-				    
+				    	break;		    
 				    case 'T':
-				    	
 				    	mem = Integer.parseInt(line.substring(1, 7),16) + rMgr.startAddr.get(currentSection);
 				    	int tmem1=0, tmem2=0;
 				    	for(int i=0;i<line.substring(9).length();) {
@@ -91,19 +87,41 @@ public class SicLoader {
 				    			tmem2 -= '0';
 				    		}
 				    		else if(tmem1>='A'&&tmem1<='F') {
-				    			tmem1 -= 'a';
+				    			tmem1 -= 'A';
 				    		}
 				    		else if(tmem2>='A'&&tmem2<='F') {
-				    			tmem2 -= 'a';
+				    			tmem2 -= 'A';
 				    		}
+				    		tmem1 = tmem1<<4;
 				    		
-				    		rMgr.memory[mem]+=tmem1<<4;
-				    		rMgr.memory[mem]+=tmem2;
+				    		rMgr.setMemory(mem, (char)(tmem1+tmem2));
+				    		
 				    		i+=2;
 				    		mem++;
 	    						    		
 				    	}
 				    	break;
+				    case 'M':
+				    	mcode.add(line);
+//				    	if(currentSection==0) {
+//				    		section.add(currentSection);
+//				    	}
+//				    	name = line.substring(1).split("\t");
+//				    	rMgr.setProgname(name[0], currentSection);
+//				    	rMgr.setProgLength(name[1].substring(6), currentSection);
+//				    	if(currentSection!=0) {
+//				    		rMgr.setStartADDR(Integer.parseInt(name[1].substring(0, 6),16)+secaddr);
+//				    	}
+//				    	else {
+//				    		rMgr.setStartADDR(Integer.parseInt(name[1].substring(0,6)));
+//				    	}
+				    	break;
+				    case 'E':
+				    	
+				    	secaddr += Integer.parseInt(rMgr.progLength.get(currentSection),16);
+				    	currentSection++;
+				    	
+				    	break;	
 				    }
 		    	  }
 		    	   		  
@@ -112,32 +130,86 @@ public class SicLoader {
 		      e.printStackTrace();
 		    }
 		    //pass 2
+
 		    try {
-		    	int zerocount=0;
+
+		    	currentSection =0;
 		    	int pacount=0;
+		    	String refleng="";
+		    	int mmem1=0, mmem2=0;
+		    	int mmem3=0;
+		    	int gmem1=0, gmem2=0;
+		    	int gmem3=0;
 		    	String[] ref;
 		    	br = new BufferedReader(new InputStreamReader(new FileInputStream(objectCode)));
 		    	
 			      while((line = br.readLine()) != null){
 			    	  if(line.length() != 0) {
 					    switch(line.charAt(0)) {
-					    case 'M':
-					    	zerocount = Integer.parseInt(String.valueOf(line.charAt(8)),16);
-					    	pacount =Integer.parseInt(String.valueOf(line.charAt(6)),16);
+					    case 'M':				    	
+					    	pacount = Integer.parseInt(line.substring(5,7),16);
 					    	
-//					    	for(int i=0;i<rMgr.progName.size();i++) {
-//					    		if(line.substring(10)==rMgr.progName.get(i)) {
-//							    	System.out.println(rMgr.startAddr.get(currentSection));
-//					    		}
-//					    	}
+					    	if(line.contains("RDREC")||line.contains("WRREC")) {
+					    		for(int i=0;i<rMgr.progName.size();i++) {
+					    			if(rMgr.progName.get(i).equals(line.substring(10))) {
+					    				refleng = Integer.toHexString(rMgr.startAddr.get(i));
+					    				break;
+					    			}
+					    		}
+					    	}
+					    	else {
+					    		//심볼테이블에서 찾아주는 아이들
+					    		refleng = Integer.toHexString(symtab.search(line.substring(10)));
+					    		refleng = String.format("%04X",(Integer.parseInt(refleng,16)));
+		
+					    	}
 
-//					    	System.out.println(rMgr.startAddr.get(currentSection));
-//					    	rMgr.memory[pacount+1] << 여기에 RDREC 한 값 넣어주기
+						    	for(int i=0;i<4;) {
+
+						    		mmem1 = Integer.parseInt(String.valueOf(refleng.charAt(i)),16);					    		
+						    		mmem2 = Integer.parseInt(String.valueOf(refleng.charAt(i+1)),16);
+						    		
+						    		if(mmem1>='0'&&mmem1<='9') {
+						    			mmem1 -= '0';
+						    		}
+						    		else if(mmem2>='0'&&mmem2<='9') {
+						    			mmem2 -= '0';
+						    		}
+						    		else if(mmem1>='A'&&mmem1<='F') {
+						    			mmem1 -= 55;
+						    		}
+						    		else if(mmem2>='A'&&mmem2<='F') {
+						    			mmem2 -= 55;
+						    		}
+						    		gmem1 = rMgr.getMemory(pacount+1);
+						    		gmem2 = rMgr.getMemory(pacount+2);
+//						    		if(line.charAt(9)=='+') {
+//						    			gmem1 += mmem1<<4;
+//							    		gmem2 += mmem2;
+////							    		System.out.println(pacount+1);
+//						    			rMgr.setMemory(pacount+1, (char)(gmem1+gmem2));
+//						    		}
+//						    		else if(line.charAt(9)=='-') {
+//						    			gmem1 -= mmem1<<4;
+//							    		gmem2 -= mmem2;
+////							    		System.out.println(pacount+1);
+//						    			rMgr.setMemory(pacount+1, (char)(gmem1+gmem2));
+//						    		}
+						    		i+=2;
+						    		pacount++;
+						    	}
 					    	break;
-					    	
+				    	
+					    case 'E':
+					    	currentSection++;
+					    	break;
 					    }
+					    
 			    	  }
 			      }
+			      for(int i=0;i<4219;i++)
+			    		System.out.println(Integer.toHexString(i)+"\t"+Integer.toHexString((int)rMgr.memory[i]));
+
 
 		    } catch(IOException e) {
 		    	e.printStackTrace();
@@ -145,25 +217,18 @@ public class SicLoader {
 		    
 
 
-	};
-	
-	
+	};	
 
 }
-/*
- * 				    case 'R':
-				    	break; 
-				    case 'T':
-				    	mem = Integer.parseInt(line.substring(1, 7),16) + rMgr.startAddr.get(currentSection);
-				    	for(int i=0;i<line.substring(9).length();i++) {
-				    		rMgr.memory += line.substring(9+i);
-				    	}
-				    	break;
-				    case 'M':
-				    	break;
-				    	*/
-//tmem = Integer.parseInt(line.substring(9+i,10+i),16);
-//rMgr.memory[mem]+=(char)tmem;
-//tmem = Integer.parseInt(line.substring(9).split("\0"),16);
-//tmem = Integer.parseInt(line.substring(9+i),16);
-//rMgr.memory[mem] += (char)tmem;
+//if(line.contains("+")) {
+//gmem1 += tmem1;
+//gmem2 += tmem2;
+////System.out.println(pacount+1);
+//rMgr.setMemory(pacount+1, (char)(gmem1+gmem2));
+//}
+//else if(line.contains("-")) {
+//gmem1 -= tmem1;
+//gmem2 -= tmem2;
+////System.out.println(pacount+1);
+//rMgr.setMemory(pacount+1, (char)(gmem1+gmem2));
+//}
