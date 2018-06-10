@@ -1,6 +1,8 @@
 package SP18_simulator;
 
 import java.io.File;
+import java.util.ArrayList;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
@@ -19,12 +21,12 @@ public class VisualSimulator {
 	ResourceManager resourceManager = new ResourceManager();
 	SicLoader sicLoader = new SicLoader(resourceManager);
 	SicSimulator sicSimulator = new SicSimulator(resourceManager);
-	
+	ArrayList<String> objcode = new ArrayList<String>();
 	/**
 	 * 프로그램 로드 명령을 전달한다.
 	 */
 	public void load(File program){
-		//...
+		
 		sicLoader.load(program);
 		sicSimulator.load(program);
 	};
@@ -33,7 +35,8 @@ public class VisualSimulator {
 	 * 하나의 명령어만 수행할 것을 SicSimulator에 요청한다.
 	 */
 	public void oneStep(){
-		
+		sicSimulator.oneStep();
+		update();
 	};
 
 	/**
@@ -117,7 +120,7 @@ class MyFrame extends JFrame {
 		pHeader.add(lbPname);
 		
 		tfpName = new JTextField();
-//		tfpName.setText();
+		
 		tfpName.setBounds(118, 17, 88, 21);
 		pHeader.add(tfpName);
 		tfpName.setColumns(10);
@@ -398,6 +401,7 @@ class MyFrame extends JFrame {
 		contentPane.add(lbLog);
 		
 		JList listinst = new JList();
+		
 		listinst.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		listinst.setBounds(263, 235, 109, 229);
 		contentPane.add(listinst);
@@ -431,6 +435,32 @@ class MyFrame extends JFrame {
 			if(tfName.getText()!="\0") {
 				btRunstep.setEnabled(true);
 				btRunall.setEnabled(true);
+				tfpName.setText(visual.sicLoader.rMgr.progName.get(0));
+				tfHaddr.setText(String.format("%06X", visual.sicLoader.rMgr.startAddr.get(0)));
+				int sum = 0;
+				for(int i=0;i<visual.sicLoader.rMgr.progLength.size();i++) {
+					sum += Integer.parseInt(visual.sicLoader.rMgr.progLength.get(i),16);
+				}
+				tfpLength.setText(String.format("%04X", sum));
+				aDec.setText("0");
+				aHex.setText("0");
+				xDec.setText("0");
+				xHex.setText("0");
+				lDec.setText("0");
+				lHex.setText("0");
+				pcDec.setText("0");
+				pcHex.setText("0");
+				tfSW.setText("0");
+				bDec.setText("0");
+				bHex.setText("0");
+				sDec.setText("0");
+				sHex.setText("0");
+				tDec.setText("0");
+				tHex.setText("0");
+				fDec.setText("0");
+				fHex.setText("0");
+				tfEAddr.setText("000000");
+				
 			}
 		}
 	}

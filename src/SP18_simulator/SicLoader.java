@@ -21,10 +21,12 @@ public class SicLoader {
 	SymbolTable symtab;
 	ArrayList<String> mcode = new ArrayList<String>();
 	ArrayList<Integer> section = new ArrayList<Integer>();
+	int currentSection;
 	public SicLoader(ResourceManager resourceManager) {
 		// 필요하다면 초기화
 		setResourceManager(resourceManager);
 		symtab = new SymbolTable();
+		currentSection =0;
 	}
 	/**
 	 * Loader와 프로그램을 적재할 메모리를 연결시킨다.
@@ -39,7 +41,7 @@ public class SicLoader {
 	 * @param objectCode 읽어들인 파일
 	 */
 	public void load(File objectCode){ 
-			int currentSection = 0;
+			
 		    String line;
 		    String[] name;
 		    String[] define;
@@ -207,8 +209,8 @@ public class SicLoader {
 					    
 			    	  }
 			      }
-			      for(int i=0;i<4219;i++)
-			    		System.out.println(Integer.toHexString(i)+"\t"+Integer.toHexString((int)rMgr.memory[i]));
+//			      for(int i=0;i<4219;i++)
+//			    		System.out.println(Integer.toHexString(i)+"\t"+Integer.toHexString((int)rMgr.memory[i]));
 
 
 		    } catch(IOException e) {

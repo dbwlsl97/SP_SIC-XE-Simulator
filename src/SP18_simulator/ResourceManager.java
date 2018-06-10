@@ -113,8 +113,11 @@ public class ResourceManager{
 	 * @return 레지스터가 소지한 값
 	 */
 	public int getRegister(int regNum){
-		return 0;
-		
+		if(regNum==6) {
+			return (int)register_F;
+		}
+		else
+			return register[regNum];
 	}
 
 	/**
@@ -123,7 +126,11 @@ public class ResourceManager{
 	 * @param value 레지스터에 집어넣는 값
 	 */
 	public void setRegister(int regNum, int value){
-	
+		if(regNum==6) {
+			register_F = value;
+		}
+		else
+			register[regNum] = value;
 	}
 
 	/**
