@@ -147,8 +147,15 @@ public class ResourceManager{
 	 * @param data
 	 * @return
 	 */
-	public int byteToInt(byte[] data){
-		return 0;
+	public int charToInt(char[] data){
+		int sum=0;
+		for(int i=0;i<data.length;i++) {
+			sum += data[i];
+			if(i!=data.length-1) {
+				sum = sum<<8;
+			}
+		}
+		return sum;
 	}
 
 	public void setProgname(String name, int currentSection) {

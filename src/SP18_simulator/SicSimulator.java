@@ -36,7 +36,10 @@ public class SicSimulator {
 	public static final int regPC = 8;
 	public static final int regSW = 9;
 	int ta=0;
-	int memcount=0;
+	int pcaddr =0; // 현재 명령어의 PC address
+	int temp = 0; // displacement 값 만 가져오기 위한 임시 변수 
+	int move =0; // displacement 에서 가장 앞에있는 값(<<8해줘야함)
+	char[] cti = new char[1]; //CharToInt 가 필요한 displacement
 	public SicSimulator(ResourceManager resourceManager) {
 		// 필요하다면 초기화 과정 추가
 		this.rMgr = resourceManager;
@@ -62,13 +65,20 @@ public class SicSimulator {
 		
 			checkop = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC)) & opFlag);
 			
-			System.out.println(checkop);
-			
 			if(checkop.equals("14")) { //STL				
 				
-				memcount+=3;
-//				rMgr.getMemory(memcount,)
-				rMgr.setRegister(regPC, memcount);
+				pcaddr = (rMgr.getRegister(regPC))+3; //현재 pc addr
+				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1)&0x0F;
+				move = temp << 8;
+				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2);
+				move += rMgr.charToInt(cti);
+				ta = pcaddr + move;
+				
+				rMgr.setMemory(ta, (char)((regL>>16) & 15));
+				rMgr.setMemory(ta+1, (char)((regL>>8) & 15));
+				rMgr.setMemory(ta+2, (char)(regL & 15));
+				
+				rMgr.setRegister(regPC, pcaddr);
 				addLog("STL");
 			}
 			else if(checkop.equals("48")) { //JSUB
