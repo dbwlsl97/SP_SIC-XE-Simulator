@@ -79,16 +79,39 @@ public class SicSimulator {
 				rMgr.setMemory(ta+2, (char)(regL & 15));
 				
 				rMgr.setRegister(regPC, pcaddr);
+				System.out.println(pcaddr);
 				addLog("STL");
 			}
 			else if(checkop.equals("48")) { //JSUB
-				memcount+=4;
-				rMgr.setRegister(regPC, memcount);
+				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1)&0xF0; //e = 1 이면 4형식이므로 확장 처리
+			
+				if(temp == 0x10) {
+					pcaddr = (rMgr.getRegister(regPC)+4);
+				}
+				rMgr.setRegister(regL, rMgr.getRegister(regPC)); //regPC+4 못했음
+				
+//				if(rMgr.getMemory(rMgr.getRegister(regPC)+2) {
+//				rMgr.setRegister(regPC );					
+//				}
+				System.out.println(pcaddr);
+
+//				rMgr.setRegister(regPC, rMgr.progLent);
 				addLog("JSUB");
 			}
 			else if(checkop.equals("00")) { //LDA
-				memcount+=3;
-				rMgr.setRegister(regPC, memcount);
+			
+				pcaddr = rMgr.getRegister(regPC)+3;
+				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1)&0x0F;
+				move = temp << 8;
+				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2);
+				move += rMgr.charToInt(cti);
+				ta = pcaddr + move;
+				
+				rMgr.setMemory(ta, (char)((regL>>16) & 15));
+				rMgr.setMemory(ta+1, (char)((regL>>8) & 15));
+				rMgr.setMemory(ta+2, (char)(regL & 15));
+				
+				rMgr.setRegister(regPC, pcaddr);
 				addLog("LDA");
 			}
 			else if(checkop.equals("28")) { //COMP

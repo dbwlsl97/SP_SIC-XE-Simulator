@@ -410,6 +410,14 @@ class MyFrame extends JFrame {
 		listLog.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		listLog.setBounds(18, 508, 463, 116);
 		contentPane.add(listLog);
+		
+		JScrollPane instScroll = new JScrollPane();
+		instScroll.setBounds(351, 235, 20, 228);
+		contentPane.add(instScroll);
+		
+		JScrollPane logScroll = new JScrollPane();
+		logScroll.setBounds(457, 508, 24, 116);
+		contentPane.add(logScroll);
 
 	}
 	class OpenActionListener implements ActionListener {
