@@ -92,21 +92,27 @@ public class ResourceManager{
 	 * @param num 데이터 개수
 	 * @return 가져오는 데이터
 	 */
-	public char getMemory(int location){
-		return	memory[location];
-		
+	public char[] getMemory(int location , int num)	//memory : aa bb cc  num : 3 이면 aa bb cc num 2 이면 aa bb
+	{
+		char r[] = new char[num];
+		for(int i = 0; i < num; i++)
+			r[i] = memory[i + location];
+		return r;
 	}
 
 	/**
 	 * 메모리의 특정 위치에 원하는 개수만큼의 데이터를 저장한다. 
 	 * @param locate 접근 위치 인덱스
-	 * @param data 저장하려는 데이터
+	 * @param cs 저장하려는 데이터
 	 * @param num 저장하는 데이터의 개수
 	 */
-	public void setMemory(int locate, char data){
-		memory[locate] = data;
+	public void setMemory(int locate, char[] cs){
+		for(int i = 0; i < cs.length; i++)
+			memory[locate + i] = cs[i];
 	}
-
+	public void setMemory(int locate, char cs){
+			memory[locate] = cs;
+	}
 	/**
 	 * 번호에 해당하는 레지스터가 현재 들고 있는 값을 리턴한다. 레지스터가 들고 있는 값은 문자열이 아님에 주의한다.
 	 * @param regNum 레지스터 분류번호
@@ -138,8 +144,14 @@ public class ResourceManager{
 	 * @param data
 	 * @return
 	 */
-	public char[] intToChar(int data){
-		return null;
+	public char[] intToChar(int data , int num) // 0x0000ffff num : 4 00 00 ff ff  num 2 : ff ff
+	{
+		char r[] = new char[num];
+		for(int i = 0; i < num; i++)
+		{
+			r[i] = (char) ((data >> ((num - i - 1) * 8)) & ((1 << 8) - 1));
+		}
+		return r;
 	}
 
 	/**
@@ -147,15 +159,11 @@ public class ResourceManager{
 	 * @param data
 	 * @return
 	 */
-	public int charToInt(char[] data){
-		int sum=0;
-		for(int i=0;i<data.length;i++) {
-			sum += data[i];
-			if(i!=data.length-1) {
-				sum = sum<<8;
-			}
-		}
-		return sum;
+	public int charToInt(char[] data){	// ff ff ff ff -> 0xfffffff aa bb -> 0x0000aabb
+		int r = 0;
+		for(int i= 0; i < data.length; i++)
+			r |= data[i] << (data.length - i - 1) * 8;
+		return r;
 	}
 
 	public void setProgname(String name, int currentSection) {

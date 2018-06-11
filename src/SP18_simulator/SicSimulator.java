@@ -17,7 +17,6 @@ import java.io.File;
  */
 public class SicSimulator {
 	ResourceManager rMgr;
-	String checkop;
 	public static final int opFlag = 0xFC;
 	public static final int nFlag = 2;
 	public static final int iFlag = 1;
@@ -43,7 +42,7 @@ public class SicSimulator {
 	public SicSimulator(ResourceManager resourceManager) {
 		// 필요하다면 초기화 과정 추가
 		this.rMgr = resourceManager;
-		checkop = "";
+
 		
 	}
 
@@ -62,15 +61,35 @@ public class SicSimulator {
 	 * 1개의 instruction이 수행된 모습을 보인다. 
 	 */
 	public void oneStep() {
-		
-			checkop = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC)) & opFlag);
+			boolean n = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x02) == 0x02;
+			boolean i = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x01) == 0x01;
+			boolean x = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x80) == 0x80;
+			boolean b = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x40) == 0x40;
+			boolean p = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x20) == 0x20;
+			boolean e = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x10) == 0x10;
+			String opcode = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & opFlag);
+			byte calbyte = 0;
+			int m=0;
+			int r1, r2=0;
+			int locctr =0;
+			boolean jump = false;
+			int address = 0;
+			if(e) {
+				address |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 16;
+				address |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff) <<8;
+				address |= (rMgr.getMemory(rMgr.getRegister(regPC)+3, 1)[0] & 0xff);
+				
+			}
+			else if(p) {
+				
+			}
 			
-			if(checkop.equals("14")) { //STL				
+			if(opcode.equals("14")) { //STL				
 				
 				pcaddr = (rMgr.getRegister(regPC))+3; //현재 pc addr
-				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1)&0x0F;
+				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1,1)[0]&0x0F;
 				move = temp << 8;
-				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2);
+				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2,1)[0];
 				move += rMgr.charToInt(cti);
 				ta = pcaddr + move;
 				
@@ -80,10 +99,11 @@ public class SicSimulator {
 				
 				rMgr.setRegister(regPC, pcaddr);
 				System.out.println(pcaddr);
+				
 				addLog("STL");
 			}
-			else if(checkop.equals("48")) { //JSUB
-				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1)&0xF0; //e = 1 이면 4형식이므로 확장 처리
+			else if(opcode.equals("48")) { //JSUB
+				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1,1)[0]&0xF0; //e = 1 이면 4형식이므로 확장 처리
 			
 				if(temp == 0x10) {
 					pcaddr = (rMgr.getRegister(regPC)+4);
@@ -98,12 +118,12 @@ public class SicSimulator {
 //				rMgr.setRegister(regPC, rMgr.progLent);
 				addLog("JSUB");
 			}
-			else if(checkop.equals("00")) { //LDA
+			else if(opcode.equals("00")) { //LDA
 			
 				pcaddr = rMgr.getRegister(regPC)+3;
-				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1)&0x0F;
+				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1,1)[0]&0x0F;
 				move = temp << 8;
-				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2);
+				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2,1)[0];
 				move += rMgr.charToInt(cti);
 				ta = pcaddr + move;
 				
@@ -114,52 +134,52 @@ public class SicSimulator {
 				rMgr.setRegister(regPC, pcaddr);
 				addLog("LDA");
 			}
-			else if(checkop.equals("28")) { //COMP
+			else if(opcode.equals("28")) { //COMP
 				addLog("COMP");
 			}
-			else if(checkop.equals("30")) { //JEQ
+			else if(opcode.equals("30")) { //JEQ
 				addLog("JEQ");
 			}
-			else if(checkop.equals("3C")) { //J
+			else if(opcode.equals("3C")) { //J
 				addLog("J");
 			}
-			else if(checkop.equals("0C")) { //STA
+			else if(opcode.equals("0C")) { //STA
 				addLog("STA");
 			}
-			else if(checkop.equals("B4")) { //CLEAR
+			else if(opcode.equals("B4")) { //CLEAR
 				addLog("CLEAR");
 			}
-			else if(checkop.equals("74")) { //LDT
+			else if(opcode.equals("74")) { //LDT
 				addLog("LDT");
 			}
-			else if(checkop.equals("E0")) { //TD
+			else if(opcode.equals("E0")) { //TD
 				addLog("TD");
 			}
-			else if(checkop.equals("D8")) { //RD
+			else if(opcode.equals("D8")) { //RD
 				addLog("RD");
 			}
-			else if(checkop.equals("A0")) { //COMPR
+			else if(opcode.equals("A0")) { //COMPR
 				addLog("COMPR");
 			}
-			else if(checkop.equals("B8")) { //TIXR
+			else if(opcode.equals("B8")) { //TIXR
 				addLog("TIXR");
 			}
-			else if(checkop.equals("10")) { //STX
+			else if(opcode.equals("10")) { //STX
 				addLog("STX");
 			}
-			else if(checkop.equals("50")) { //LDCH
+			else if(opcode.equals("50")) { //LDCH
 				addLog("LDCH");
 			}
-			else if(checkop.equals("38")) { //JLT
+			else if(opcode.equals("38")) { //JLT
 				
 			}
-			else if(checkop.equals("DC")) { //WD
+			else if(opcode.equals("DC")) { //WD
 				
 			}
-			else if(checkop.equals("4C")) { //RSUB
+			else if(opcode.equals("4C")) { //RSUB
 				
 			}
-			else if(checkop.equals("54")) { //STCH
+			else if(opcode.equals("54")) { //STCH
 				
 			}
 			

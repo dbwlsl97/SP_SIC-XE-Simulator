@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import javax.tools.DocumentationTool.Location;
+
 /**
  * SicLoader는 프로그램을 해석해서 메모리에 올리는 역할을 수행한다. 이 과정에서 linker의 역할 또한 수행한다. 
  * <br><br>
@@ -20,6 +22,7 @@ public class SicLoader {
 	ResourceManager rMgr;
 	SymbolTable symtab;
 	ArrayList<String> mcode = new ArrayList<String>();
+	ArrayList<Integer> mcodeAddress = new ArrayList<Integer>();
 	ArrayList<Integer> section = new ArrayList<Integer>();
 	int currentSection;
 	int pacount=0;
@@ -81,9 +84,7 @@ public class SicLoader {
 				    case 'T':
 				    	mem = Integer.parseInt(line.substring(1, 7),16) + rMgr.startAddr.get(currentSection);
 				    	int ttmem=0, tmem1=0, tmem2=0;
-				    	for(int i=0;i<line.substring(9).length();) {
-				  //  		ttmem = Integer.parseInt(line.substring(9+i,11+i),16);
-				    		
+				    	for(int i=0;i<line.substring(9).length();) {				    		
 				    		tmem1 = Integer.parseInt(String.valueOf(line.charAt(9+i)),16);
 				    		tmem2 = Integer.parseInt(String.valueOf(line.charAt(10+i)),16);
 				    		
@@ -110,6 +111,8 @@ public class SicLoader {
 				    	break;
 				    case 'M':
 				    	mcode.add(line);
+				    	mcodeAddress.add(secaddr);
+			
 				    	break;
 				    case 'E':
 				    	
@@ -125,133 +128,48 @@ public class SicLoader {
 		      e.printStackTrace();
 		    }
 		    //pass 2
-		    int count=0;
-		    int temp=0;
-		    int save =0;
-//		    int refleng=0;
+		    int zerocount=0;
+			int chickenSum = 0;
+			int nowAddress;
 		    for(int i=0;i<mcode.size();i++) {
-		    	int a=0, b=0;
-		    	pacount = (Integer.parseInt(mcode.get(i).substring(5,7),16)+1);
-		    	String refleng = String.format("%04X", symtab.search(mcode.get(i).substring(10)));
-//		    	String refleng = symtab.search(mcode.get(i).substring(10));
-//		    	System.out.println(refleng);
-		    	a = rMgr.memory[pacount+1];
-		    	a = a<<8;
-		    	b = rMgr.memory[pacount+2];
-		    	a |= b;
-		    	if(a != 0) {
-		    		a = 0;
+		    	int a=0, b=0 , c=0;
+		    	pacount = Integer.parseInt(mcode.get(i).substring(5,7),16);
+		    	int symAddres = symtab.search(mcode.get(i).substring(10));
+		    	nowAddress = mcodeAddress.get(i);
+		    	zerocount = (mcode.get(i).charAt(8));
+		    	if(zerocount=='5') {
+		    		b = rMgr.memory[pacount + 1];
+			    	c = rMgr.memory[pacount + 2];
 		    	}
-		    		    	
-		    	for(int c=0;c<4;c++) {
-		
-		    		if(refleng.charAt(c)>='0'&&refleng.charAt(c)<='9') {
-		    			temp += (char)(refleng.charAt(c) - '0');
-		    		}
-		    		else if(refleng.charAt(c)>='A'&&refleng.charAt(c)<='F') {
-		    			temp += (char)(refleng.charAt(c) - 55);
-		    		}
-		    		if(count==0) {
-		    			temp = (char)(temp<<4);
-		    			count=1;
-		    		}
-		    		else if(count==1) {
-
-				    	if(mcode.get(i).charAt(9)=='+') {
-				    		rMgr.setMemory(pacount, (char)(rMgr.getMemory(pacount)+temp ));
-				    	}
-				    	else if(mcode.get(i).charAt(9)=='-') {
-				    		rMgr.setMemory(pacount, (char)(rMgr.getMemory(pacount)-temp ));
-				    	}
-				    
-//		    		rMgr.setMemory(pacount+1, (char)save);
-		    		pacount++;
-		    		temp = (char)(count=0);
-		    		}
+		    	else if(zerocount == '6')
+		    	{
+		    		a = rMgr.memory[pacount];
+			    	b = rMgr.memory[pacount + 1];
+			    	c = rMgr.memory[pacount + 2];
 		    	}
 		    
+		    	chickenSum |= a << 16;
+		    	chickenSum |= b << 8;
+		    	chickenSum |= c;
+		    	if(zerocount == '5')
+		    	{
+		    		if(mcode.get(i).charAt(9) == '+')
+		    			rMgr.setMemory((pacount + 1 + nowAddress) ,rMgr.intToChar( (symAddres + chickenSum) , 2));
+		    		if(mcode.get(i).charAt(9) == '-')
+		    			rMgr.setMemory((pacount + 1 + nowAddress) ,rMgr.intToChar( (-symAddres + chickenSum) , 2));
 		    	}
-	          for(int i=0;i<4219;i++)
-  		System.out.println(Integer.toHexString(i)+"\t"+Integer.toHexString((int)rMgr.memory[i]));
+		    	if(zerocount == '6')
+		    	{
+		    		if(mcode.get(i).charAt(9) == '+')
+		    			rMgr.setMemory(pacount + nowAddress ,rMgr.intToChar( symAddres + chickenSum , 3));
+		    		if(mcode.get(i).charAt(9) == '-')
+		    			rMgr.setMemory(pacount  + nowAddress,rMgr.intToChar( -symAddres + chickenSum , 3));
+		    	}
+		    		    
+		    	}
+//	          for(int i=0;i<4219;i++)
+//	        	  	System.out.println(String.format("%X   : %02X", i ,(int)(rMgr.memory[i])));
 
-		    	
-
-//	          		    try {
-//		    	currentSection =0;
-//		    	int pacount=0;
-//		    	String refleng="";
-//		    	int mmem1=0, mmem2=0;
-//		    	int gmem1=0, gmem2=0;
-//		    	int realaddr=0;
-//		    	String[] ref;
-//		    	br = new BufferedReader(new InputStreamReader(new FileInputStream(objectCode)));
-//		    	
-//			      while((line = br.readLine()) != null){
-//			    	  if(line.length() != 0) {
-//					    switch(line.charAt(0)) {
-//					    case 'M':				    	
-//					    	pacount = Integer.parseInt(line.substring(5,7),16)+1;
-//					    	
-//
-//					    		//심볼테이블에서 찾아주는 아이들
-//					    		refleng = Integer.toHexString(symtab.search(line.substring(10)));
-//					    		refleng = String.format("%04X",(Integer.parseInt(refleng,16)));
-//		//			    		refleng += rMgr.startAddr.get(currentSection);
-//			//		    		System.out.println(refleng);
-//					    	
-//					    	
-//						    	for(int i=0;i<4;) {
-//						    		if(line.charAt(9)=='+') {
-//		
-//						    			rMgr.setMemory(pacount, (char)(mmem1));
-//						    		}
-//						    		else if(line.charAt(9)=='-') {
-//						    			rMgr.setMemory(pacount, (char)(mmem1));
-//						    		}
-//						    		
-//						    		mmem1 = Integer.parseInt(String.valueOf(refleng.charAt(i)),16);						    		
-//						    		mmem2 = Integer.parseInt(String.valueOf(refleng.charAt(i+1)),16);
-//						    		
-//						    		
-//						    		if((char)mmem1>='0'&&(char)mmem1<='9') {
-//						    			refleng = (char)(mmem1 - '0');
-//						    		}
-//						    		else if(mmem2>='0'&&mmem2<='9') {
-//						    			mmem2 -= '0';
-//						    		}
-//						    		else if(mmem1>='A'&&mmem1<='F') {
-//						    			mmem1 -= 55;
-//						    		}
-//						    		else if(mmem2>='A'&&mmem2<='F') {
-//						    			mmem2 -= 55;
-//						    		}
-////						    		System.out.println(mmem1+"\t"+mmem2);
-//						    		mmem1 = mmem1 << 4;
-//						    		mmem1 |= mmem2;
-//						    		rMgr.setMemory(pacount, (char)(mmem1));
-//						    		realaddr = rMgr.startAddr.get(currentSection);
-//
-//
-//						    		i+=2;
-//						    		pacount++;
-//						    	}
-//					    	break;
-//				    	
-//					    case 'E':
-//					    	currentSection++;
-//					    	break;
-//					    }
-//			    	  }
-//			      }
-//			    	  
-//			      
-//			          for(int i=0;i<4219;i++)
-//		    		System.out.println(Integer.toHexString(i)+"\t"+Integer.toHexString((int)rMgr.memory[i]));
-//
-//
-//		    } catch(IOException e) {
-//		    	e.printStackTrace();
-//		    }
 	};	
 
 }
