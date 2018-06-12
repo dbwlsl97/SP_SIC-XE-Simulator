@@ -36,7 +36,7 @@ public class ResourceManager{
 	 * 이것도 복잡하면 알아서 구현해서 사용해도 괜찮습니다.
 	 */
 	SicSimulator ssm = new SicSimulator(this);
-	FileChannel fc;
+	FileChannel filechannel;
 	int byteCount = 0;
 	HashMap<String,Object> deviceManager = new HashMap<String,Object>();
 	char[] memory = new char[65536]; // String으로 수정해서 사용하여도 무방함.
@@ -73,16 +73,18 @@ public class ResourceManager{
 	public void testDevice(String devName){
 		if(!deviceManager.containsKey(devName)) {
 		try {
-			fc = FileChannel.open(
-					Paths.get("./"+devName.toUpperCase()+".txt"),
+			filechannel = FileChannel.open(
+					Paths.get("./"+String.format("%02X", Integer.parseInt(devName,16))+".txt"),
 					StandardOpenOption.CREATE,
-					StandardOpenOption.WRITE,
-					StandardOpenOption.READ
+					StandardOpenOption.READ,
+					StandardOpenOption.WRITE
+
 					);
-			deviceManager.put(devName, fc);
+			deviceManager.put(devName, filechannel);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			setRegister(ssm.regSW, -1);
+			e.printStackTrace();
 		}
 		}
 	}
@@ -109,11 +111,11 @@ public class ResourceManager{
 //	   }
 	public char readDevice(String devName){
 		
-			FileChannel filec = (FileChannel)deviceManager.get(devName);
+			FileChannel fc = (FileChannel)deviceManager.get(devName);
 			ByteBuffer buf = ByteBuffer.allocate(1);
 	       
 	        try {
-	        	byteCount = filec.read(buf);
+	        	byteCount = fc.read(buf);
 	        	buf.flip();	   
 	            if (byteCount == -1) {
 	            	return 0;
@@ -121,8 +123,7 @@ public class ResourceManager{
 	        } catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-
+	        }
 		return (char)buf.get();
 		
 	}
@@ -133,7 +134,22 @@ public class ResourceManager{
 	 * @param data 보내는 데이터
 	 * @param num 보내는 글자의 개수
 	 */
-	public void writeDevice(String devName, char[] data, int num){
+	public void writeDevice(String devName, char data){
+		
+		FileChannel fc = (FileChannel)deviceManager.get(devName);
+		Charset charset;
+		ByteBuffer buf;
+
+
+//		try {
+//			charset = Charset.defaultCharset();
+//			buf = charset.encode(String.valueOf(data));
+//			fc.write(buf);
+//
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 	}
 	

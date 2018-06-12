@@ -35,10 +35,9 @@ public class SicSimulator {
 	public static final int regF = 6;
 	public static final int regPC = 8;
 	public static final int regSW = 9;
-
+	
 	int mem =0; //현재 objectcode 에서 가져 온 memory
 	int cc =0; // JEQ, JGT, JLT 할 때 가져와서 비교하는 regSW 의 값
-
 	public SicSimulator(ResourceManager resourceManager) {
 		// 필요하다면 초기화 과정 추가
 		this.rMgr = resourceManager;		
@@ -59,6 +58,12 @@ public class SicSimulator {
 	 * 1개의 instruction이 수행된 모습을 보인다.  
 	 */
 	public void oneStep() {
+		int charmem = 0;
+		int pc=0; // 현재 명령어의 PC Address
+		boolean jump = false;
+
+			String opcode = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & opFlag).toUpperCase();
+			opcode = String.format("%02X", Integer.parseInt(opcode,16));		
 			boolean n = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x02) == 0x02;
 			boolean i = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x01) == 0x01;
 			boolean x = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x80) == 0x80;
@@ -69,26 +74,38 @@ public class SicSimulator {
 			byte calbyte = 0;
 			int m=0;
 			int r1=0, r2=0;
-			int locctr =0;
-			boolean jump = false;
-			int address = 0;
+			
+			
 			int ta=0; // Target Address
-			int pc=0; // 현재 명령어의 PC Address
+
 			int disp = 0; // 현재 object code 의 displacement
 			char text = 0;
-			String opcode = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & opFlag).toUpperCase();
-
-			
+	
 			if(e) {
 				
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 16;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff) << 8;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+3, 1)[0] & 0xff);
-
+				if(disp>10000) {
+					disp =0;
+				}
+				else {
 				m = disp;
-
+				ta = m;
 				pc = rMgr.getRegister(regPC)+4;
-				
+				}
+
+				if(x) {
+//					System.out.println("regX : "+regX);
+//					if(m>2048) {
+//						m -= 4096;
+//					}
+
+					m += rMgr.getRegister(regX);
+
+//					System.out.println("m : "+m);
+				}
+
 			}
 			else if(p) {
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
@@ -96,30 +113,26 @@ public class SicSimulator {
 
 //				System.out.println("disp : "+disp);
 				pc = rMgr.getRegister(regPC)+3;
-
 				ta = disp + pc;
+				if(disp>2048) {
+					disp -= 4096;
+				}
 
-			}
-
-
+			}			
 			else if(n) {
 				//간접
-				
+				ta = rMgr.getRegister(rMgr.getRegister(disp));
+//				System.out.println("ta is :"+ta);
 			}
-			else if(i) {
+			else if(!n && i) {
 				//직접
-				
+				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
+				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
+				ta = disp;
+				rMgr.setMemory(disp, rMgr.intToChar(ta, 3));
+				pc = rMgr.getRegister(regPC)+3;
 			}
-//			else if(r1) {
-//				//2형식
-//			}
 
-//			System.out.println("pc : "+rMgr.getRegister(regPC)+"\t"+pc);
-//			System.out.println("opcode :"+opcode);
-			System.out.println("cc : "+cc);
-			if(disp>2048) {
-				disp -= 4096;
-			}
 			switch(opcode) {
 			case "14": // STL
 			
@@ -127,15 +140,15 @@ public class SicSimulator {
 				rMgr.setRegister(regPC, pc);
 				
 				addLog("STL");
-				
 				break;
-			case "48" : //JSUB
 				
+			case "48" : //JSUB
+			
 				rMgr.setRegister(regL, pc);
 				rMgr.setRegister(regPC, m);
 				addLog("JSUB");
-				
 				break;
+				
 			case "B4" : //CLEAR
 
 				r1 = (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0]) >> 4;	
@@ -145,11 +158,15 @@ public class SicSimulator {
 				
 				addLog("CLEAR");
 				break;			
+				
 			case "74": //LDT
-				System.out.println("My ta is "+ta);
-//				System.out.println((int)rMgr.getMemory(ta, 3)[0]+" "+(int)rMgr.getMemory(ta, 3)[1]+" "+(int)rMgr.getMemory(ta, 3)[2]);
-				mem = rMgr.charToInt(rMgr.getMemory(ta, 3));
-				System.out.println("MY MEM IS :"+mem);
+				if(e) { //4형식일 때 메모리 처리
+					mem = ta;
+				}
+				else { //3형식일 때 메모리 처리
+					mem = rMgr.charToInt(rMgr.getMemory(ta, 3));
+				}
+				
 				rMgr.setRegister(regT, mem);
 				rMgr.setRegister(regPC, pc);
 				
@@ -157,69 +174,83 @@ public class SicSimulator {
 				break;
 				
 			case "E0": //TD
-//				System.out.println("내 주소 : "+rMgr.getRegister(regPC)+"\t"+pc);
 				mem = rMgr.charToInt(rMgr.getMemory(ta, 1));
+
 				rMgr.testDevice(Integer.toHexString(mem));
 				rMgr.setRegister(regPC, pc);
-				
 				addLog("TD");
 				break;
 				
 			case "30": //JEQ
-//				cc = rMgr.getRegister(regSW);
-				System.out.println("cc뭐냐요??? "+cc);
-				if(cc==-1) {
+//				rMgr.setRegister(regSW,-1);
+				if(rMgr.getRegister(regSW)==-1) {
+//				if(cc==-1) {
 					ta = pc+disp;
 					rMgr.setRegister(regPC, ta);
-					System.out.println("ta is "+ta);
 				}
-				else
 					rMgr.setRegister(regPC, pc);
-				
+		
+					
 				addLog("JEQ");
 				break;
+				
 			case "D8": //RD 
 				text = rMgr.readDevice(Integer.toHexString(mem));
-				System.out.println("text : "+ (int)text);
 				rMgr.setRegister(regA, text);	
 				rMgr.setRegister(regPC, pc);
-			//	System.out.println(rMgr.getRegister(text));
 				addLog("RD");
 				break;
+				
 			case "A0": //COMPR
 				r1 = rMgr.getRegister(rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC)+1, 1))>>4);
 				r2 = rMgr.getRegister(rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)) & 0x0f);
 				pc = rMgr.getRegister(regPC)+2;
-				System.out.println("r1: "+r1+" r2 : "+r2);
 				if(r1==r2) {
-					cc = -1;
-					
+					rMgr.setRegister(regSW,-1);
+//					cc = -1;		
 				}
-				
 				rMgr.setRegister(regPC, pc);
 				
 				addLog("COMPR");
 				break;
 				
-			case "54": //STCH
-					rMgr.setMemory(m, rMgr.intToChar(rMgr.getRegister(text), 1));
+			case "54": //STCH             A 오른쪽 어디갔냐?????????????????????
+//					System.out.println(rMgr.getRegister(text));
+					rMgr.setMemory(m, rMgr.intToChar(rMgr.getRegister(regA), 1));
+//					System.out.println(m);
+//					System.out.println((int)rMgr.getMemory(m, 3)[0]);
 					rMgr.setRegister(regPC, pc);
-					
+					charmem = m;
+					System.out.println(charmem);
 					addLog("STCH");
 					break;
+					
+			case "50": //LDCH
+
+				mem = rMgr.getMemory(rMgr.getRegister(regA), 3)[0];
+				System.out.println("mem is "+mem);
+				rMgr.setRegister(regA, mem);
+				rMgr.setRegister(regPC, pc);
+								
+				addLog("LDCH");
+				break;
+				
 			case "B8": //TIXR	
 					rMgr.setRegister(regX, rMgr.getRegister(regX)+1);
-					System.out.println("T is "+rMgr.getRegister(regT)+"\t X is "+rMgr.getRegister(regX));
+	//				System.out.println("T is "+rMgr.getRegister(regT)+"\t X is "+rMgr.getRegister(regX));
 					if(rMgr.getRegister(regT) < rMgr.getRegister(regX)) {
-						cc = -1;
+						rMgr.setRegister(regSW,-1);
+	//					cc = -1;
 					}
 					pc = rMgr.getRegister(regPC)+2;
 					rMgr.setRegister(regPC, pc);
 					
 					addLog("TIXR");
 					break;
+					
 			case "38": //JLT
-					if(cc==-1) {
+//					if(cc==-1) {
+				if(rMgr.getRegister(regSW)==-1) {
 						rMgr.setRegister(regPC, pc);
 					}
 					else {
@@ -228,72 +259,59 @@ public class SicSimulator {
 					}
 					addLog("JLT");
 					break;
+					
 			case "10": //STX
 					rMgr.setMemory(ta, rMgr.intToChar(regX, 3));
 					rMgr.setRegister(regPC, pc);
 					
 					addLog("STX");
 					break;
-			case "4C": //RSUB
-					rMgr.setRegister(regPC, rMgr.getRegister(regL));
-					System.out.println("L register : "+rMgr.getRegister(regL));
 					
+			case "4C": //RSUB
+					rMgr.setRegister(regPC, rMgr.getRegister(regL));					
 					addLog("RSUB");
 					break;
+					
 			case "00": // LDA
-				
+
+				mem = rMgr.charToInt(rMgr.getMemory(ta, 3));
+				rMgr.setRegister(regA, mem);
+//				pc = rMgr.getRegister(regPC)+3;
+				rMgr.setRegister(regPC, pc);
+//				System.out.println("reg PC : "+rMgr.getRegister(regPC)+" PC : "+pc);
 				addLog("LDA");
 				break;
-			
+				
+			case "0C": //STA
+				rMgr.setMemory(ta, rMgr.intToChar(regA, 3));
+				rMgr.setRegister(regPC, pc);
+				addLog("STA");
+				break;
+				
 			case "28": //COMP
+				if(rMgr.getRegister(regA)==disp) {
+					rMgr.setRegister(regSW, -1);
+//					cc = -1;
+				}
+				rMgr.setRegister(rMgr.getRegister(regA), ta);
+				rMgr.setRegister(regPC, pc);
 				
 				addLog("COMP");
 				break;
-			case "DC": //WD
 				
+			case "DC": //WD
+//				System.out.println("Memory : "+String.format("%X", (rMgr.getRegister(regA)&0xff)));
+				rMgr.writeDevice(Integer.toHexString(mem), (char)(rMgr.getMemory(charmem, 3)[0] & 0xff));
+				rMgr.setRegister(regPC,pc);
 				addLog("WD");
 				break;
-			case "3C": //J
 				
+			case "3C": //J
+//				rMgr.setRegister(regPC, ??));
 				addLog("J");
 				break;
 				
 			}
-				
-			
-				
-//			if(opcode.equals("28")) { //COMP
-//				addLog("COMP");
-//			}
-
-//			else if(opcode.equals("3C")) { //J
-//				addLog("J");
-//			}
-//			else if(opcode.equals("0C")) { //STA
-//				addLog("STA");
-//			}
-//			}
-//			else if(opcode.equals("74")) { //LDT
-//				addLog("LDT");
-//			}
-//			else if(opcode.equals("10")) { //STX
-//				addLog("STX");
-//			}
-//			else if(opcode.equals("50")) { //LDCH
-//				addLog("LDCH");
-//			}
-//			else if(opcode.equals("38")) { //JLT
-//				
-//			}
-//			else if(opcode.equals("DC")) { //WD
-//				
-//			}
-//			else if(opcode.equals("4C")) { //RSUB
-//				
-//			}
-//			else if(opcode.equals("54")) { //STCH
-//				
-//			}
 			
 		
 	}
