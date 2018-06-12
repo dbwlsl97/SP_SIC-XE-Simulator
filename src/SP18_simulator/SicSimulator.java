@@ -34,16 +34,17 @@ public class SicSimulator {
 	public static final int regF = 6;
 	public static final int regPC = 8;
 	public static final int regSW = 9;
-	int ta=0;
+	int ta=0; // Target Address
+	int pc=0; // 현재 명령어의 PC Address
+	int disp = 0; // 현재 object code 의 displacement
+	
 	int pcaddr =0; // 현재 명령어의 PC address
 	int temp = 0; // displacement 값 만 가져오기 위한 임시 변수 
 	int move =0; // displacement 에서 가장 앞에있는 값(<<8해줘야함)
 	char[] cti = new char[1]; //CharToInt 가 필요한 displacement
 	public SicSimulator(ResourceManager resourceManager) {
 		// 필요하다면 초기화 과정 추가
-		this.rMgr = resourceManager;
-
-		
+		this.rMgr = resourceManager;		
 	}
 
 	/**
@@ -67,74 +68,87 @@ public class SicSimulator {
 			boolean b = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x40) == 0x40;
 			boolean p = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x20) == 0x20;
 			boolean e = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x10) == 0x10;
+			
 			String opcode = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & opFlag);
+			
 			byte calbyte = 0;
 			int m=0;
-			int r1, r2=0;
+			int r1=0, r2=0;
 			int locctr =0;
 			boolean jump = false;
 			int address = 0;
+			
+			
 			if(e) {
-				address |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 16;
-				address |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff) <<8;
-				address |= (rMgr.getMemory(rMgr.getRegister(regPC)+3, 1)[0] & 0xff);
+				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 16;
+				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff) << 8;
+				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+3, 1)[0] & 0xff);
+				System.out.println(Integer.toHexString(disp));
+				m = disp;
+				System.out.println(Integer.toHexString(m));
+				pc = rMgr.getRegister(regPC)+4;
+			
+				
 				
 			}
 			else if(p) {
+				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
+				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
+				pc = rMgr.getRegister(regPC)+3;
+				ta = disp + pc;
+			}
+			else if(n) {
+				//간접
+				
+			}
+			else if(i) {
+				//직접
 				
 			}
 			
-			if(opcode.equals("14")) { //STL				
+			switch(opcode) {
+			case "14": // STL
+				System.out.println("STL pc :"+pc);
 				
-				pcaddr = (rMgr.getRegister(regPC))+3; //현재 pc addr
-				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1,1)[0]&0x0F;
-				move = temp << 8;
-				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2,1)[0];
-				move += rMgr.charToInt(cti);
-				ta = pcaddr + move;
+				rMgr.setRegister(regPC, pc);
 				
 				rMgr.setMemory(ta, (char)((regL>>16) & 15));
 				rMgr.setMemory(ta+1, (char)((regL>>8) & 15));
 				rMgr.setMemory(ta+2, (char)(regL & 15));
-				
-				rMgr.setRegister(regPC, pcaddr);
-				System.out.println(pcaddr);
 				
 				addLog("STL");
-			}
-			else if(opcode.equals("48")) { //JSUB
-				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1,1)[0]&0xF0; //e = 1 이면 4형식이므로 확장 처리
-			
-				if(temp == 0x10) {
-					pcaddr = (rMgr.getRegister(regPC)+4);
-				}
-				rMgr.setRegister(regL, rMgr.getRegister(regPC)); //regPC+4 못했음
 				
-//				if(rMgr.getMemory(rMgr.getRegister(regPC)+2) {
-//				rMgr.setRegister(regPC );					
-//				}
-				System.out.println(pcaddr);
-
-//				rMgr.setRegister(regPC, rMgr.progLent);
+				break;
+			case "48" : //JSUB
+				System.out.println("JSUB pc :"+pc);
+				rMgr.setRegister(regPC, pc);
+				
 				addLog("JSUB");
-			}
-			else if(opcode.equals("00")) { //LDA
-			
-				pcaddr = rMgr.getRegister(regPC)+3;
-				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1,1)[0]&0x0F;
-				move = temp << 8;
-				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2,1)[0];
-				move += rMgr.charToInt(cti);
-				ta = pcaddr + move;
 				
-				rMgr.setMemory(ta, (char)((regL>>16) & 15));
-				rMgr.setMemory(ta+1, (char)((regL>>8) & 15));
-				rMgr.setMemory(ta+2, (char)(regL & 15));
+				break;
+			case "B4" : //CLEAR
 				
-				rMgr.setRegister(regPC, pcaddr);
-				addLog("LDA");
+				break;
+				
 			}
-			else if(opcode.equals("28")) { //COMP
+
+//			if(opcode.equals("00")) { //LDA
+//			
+//				pcaddr = rMgr.getRegister(regPC)+3;
+//				temp = rMgr.getMemory(rMgr.getRegister(regPC)+1,1)[0]&0x0F;
+//				move = temp << 8;
+//				cti[0] = rMgr.getMemory(rMgr.getRegister(regPC)+2,1)[0];
+//				move += rMgr.charToInt(cti);
+//				ta = pcaddr + move;
+//				
+//				rMgr.setMemory(ta, (char)((regL>>16) & 15));
+//				rMgr.setMemory(ta+1, (char)((regL>>8) & 15));
+//				rMgr.setMemory(ta+2, (char)(regL & 15));
+//				
+//				rMgr.setRegister(regPC, pcaddr);
+//				addLog("LDA");
+//			}
+			if(opcode.equals("28")) { //COMP
 				addLog("COMP");
 			}
 			else if(opcode.equals("30")) { //JEQ
@@ -147,7 +161,9 @@ public class SicSimulator {
 				addLog("STA");
 			}
 			else if(opcode.equals("B4")) { //CLEAR
+				pc +=2;
 				addLog("CLEAR");
+				
 			}
 			else if(opcode.equals("74")) { //LDT
 				addLog("LDT");
