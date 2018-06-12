@@ -1,6 +1,12 @@
 package SP18_simulator;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -29,6 +35,9 @@ public class ResourceManager{
 	 * <br><br>
 	 * 이것도 복잡하면 알아서 구현해서 사용해도 괜찮습니다.
 	 */
+	SicSimulator ssm = new SicSimulator(this);
+	FileChannel fc;
+	int byteCount = 0;
 	HashMap<String,Object> deviceManager = new HashMap<String,Object>();
 	char[] memory = new char[65536]; // String으로 수정해서 사용하여도 무방함.
 	int[] register = new int[10];
@@ -61,18 +70,60 @@ public class ResourceManager{
 	 * 입출력 stream을 열고 deviceManager를 통해 관리시킨다.
 	 * @param devName 확인하고자 하는 디바이스의 번호,또는 이름
 	 */
-	public void testDevice(String devName) {
-		
+	public void testDevice(String devName){
+		if(!deviceManager.containsKey(devName)) {
+		try {
+			fc = FileChannel.open(
+					Paths.get("./"+devName.toUpperCase()+".txt"),
+					StandardOpenOption.CREATE,
+					StandardOpenOption.WRITE,
+					StandardOpenOption.READ
+					);
+			deviceManager.put(devName, fc);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			setRegister(ssm.regSW, -1);
+		}
+		}
 	}
 
 	/**
 	 * 디바이스로부터 원하는 개수만큼의 글자를 읽어들인다. RD명령어를 사용했을 때 호출되는 함수.
 	 * @param devName 디바이스의 이름
-	 * @param num 가져오는 글자의 개수
 	 * @return 가져온 데이터
 	 */
-	public char[] readDevice(String devName, int num){
-		return null;
+//	public char readDevice(String devName){
+//	      FileChannel fc = (FileChannel)deviceManager.get(devName);
+//	      ByteBuffer buffer = ByteBuffer.allocate(1);
+//	      device = devName;
+//	      try {
+//	         noOfBytesRead  = fc.read(buffer);
+//	         buffer.flip();
+//	         if(noOfBytesRead == -1)
+//	            return 0;
+//	      } catch (IOException e) {
+//	         // TODO Auto-generated catch block
+//	         e.printStackTrace();
+//	      }
+//	      return (char)buffer.get();
+//	   }
+	public char readDevice(String devName){
+		
+			FileChannel filec = (FileChannel)deviceManager.get(devName);
+			ByteBuffer buf = ByteBuffer.allocate(1);
+	       
+	        try {
+	        	byteCount = filec.read(buf);
+	        	buf.flip();	   
+	            if (byteCount == -1) {
+	            	return 0;
+	            }
+	        } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return (char)buf.get();
 		
 	}
 
@@ -110,9 +161,7 @@ public class ResourceManager{
 		for(int i = 0; i < cs.length; i++)
 			memory[locate + i] = cs[i];
 	}
-	public void setMemory(int locate, char cs){
-			memory[locate] = cs;
-	}
+
 	/**
 	 * 번호에 해당하는 레지스터가 현재 들고 있는 값을 리턴한다. 레지스터가 들고 있는 값은 문자열이 아님에 주의한다.
 	 * @param regNum 레지스터 분류번호

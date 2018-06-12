@@ -101,8 +101,8 @@ public class SicLoader {
 				    			tmem2 -= 'A';
 				    		}
 				    		tmem1 = tmem1<<4;
-				    		
-				    		rMgr.setMemory(mem, (char)(tmem1+tmem2));
+				    		char[] abc = rMgr.intToChar(tmem1+tmem2, 1);
+				    		rMgr.setMemory(mem, abc);
 				    		
 				    		i+=2;
 				    		mem++;
@@ -133,9 +133,12 @@ public class SicLoader {
 			int nowAddress;
 		    for(int i=0;i<mcode.size();i++) {
 		    	int a=0, b=0 , c=0;
-		    	pacount = Integer.parseInt(mcode.get(i).substring(5,7),16);
-		    	int symAddres = symtab.search(mcode.get(i).substring(10));
 		    	nowAddress = mcodeAddress.get(i);
+		    	pacount = Integer.parseInt((mcode.get(i).substring(5,7)),16);
+		    	pacount += nowAddress;
+		    	int symAddres = symtab.search(mcode.get(i).substring(10));
+		    	
+
 		    	zerocount = (mcode.get(i).charAt(8));
 		    	if(zerocount=='5') {
 		    		b = rMgr.memory[pacount + 1];
@@ -151,23 +154,25 @@ public class SicLoader {
 		    	chickenSum |= a << 16;
 		    	chickenSum |= b << 8;
 		    	chickenSum |= c;
+		    	
 		    	if(zerocount == '5')
 		    	{
 		    		if(mcode.get(i).charAt(9) == '+')
-		    			rMgr.setMemory((pacount + 1 + nowAddress) ,rMgr.intToChar( (symAddres + chickenSum) , 2));
+		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (symAddres + chickenSum) , 2));
 		    		if(mcode.get(i).charAt(9) == '-')
-		    			rMgr.setMemory((pacount + 1 + nowAddress) ,rMgr.intToChar( (-symAddres + chickenSum) , 2));
+		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (-symAddres + chickenSum) , 2));
 		    	}
 		    	if(zerocount == '6')
 		    	{
 		    		if(mcode.get(i).charAt(9) == '+')
-		    			rMgr.setMemory(pacount + nowAddress ,rMgr.intToChar( symAddres + chickenSum , 3));
+		    			rMgr.setMemory(pacount  ,rMgr.intToChar( symAddres + chickenSum , 3));
 		    		if(mcode.get(i).charAt(9) == '-')
-		    			rMgr.setMemory(pacount  + nowAddress,rMgr.intToChar( -symAddres + chickenSum , 3));
+		    			rMgr.setMemory(pacount ,rMgr.intToChar( - symAddres + chickenSum , 3));
 		    	}
 		    		    
 		    	}
-//	          for(int i=0;i<4219;i++)
+
+//		    for(int i=0;i<4219;i++)
 //	        	  	System.out.println(String.format("%X   : %02X", i ,(int)(rMgr.memory[i])));
 
 	};	
