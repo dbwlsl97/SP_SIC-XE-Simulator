@@ -136,8 +136,7 @@ public class SicLoader {
 		    	pacount = Integer.parseInt((mcode.get(i).substring(5,7)),16);
 		    	pacount += nowAddress;
 		    	int symAddres = symtab.search(mcode.get(i).substring(10));
-		    	
-
+		    
 		    	zerocount = (mcode.get(i).charAt(8));
 		    	if(zerocount=='5') {
 		    		b = rMgr.memory[pacount + 1];
@@ -166,9 +165,6 @@ public class SicLoader {
 		    	}
 		    		    
 		    	}
-
-//		    for(int i=0;i<4219;i++)
-//	        	  	System.out.println(String.format("%X   : %02X", i ,(int)(rMgr.memory[i])));
 
 	};	
 

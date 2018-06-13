@@ -22,7 +22,6 @@ import javax.swing.plaf.synth.SynthSpinnerUI;
 public class SicSimulator {
 	ResourceManager rMgr;
 	public static final int opFlag = 0xFC;
-	   
 	public static final int regA = 0;
 	public static final int regX = 1;
 	public static final int regL = 2;
@@ -32,6 +31,7 @@ public class SicSimulator {
 	public static final int regF = 6;
 	public static final int regPC = 8;
 	public static final int regSW = 9;
+	
 	ArrayList<String> addlog = new ArrayList<String>();
 	boolean jump = false;
 	int mem =0; //현재 objectcode 에서 가져 온 memory
@@ -48,7 +48,6 @@ public class SicSimulator {
 	public void load(File program) {
 		/* 메모리 초기화, 레지스터 초기화 등*/
 		rMgr.initializeResource();
-
 	}
 
 	/**
@@ -312,7 +311,6 @@ public class SicSimulator {
 	 */
 	public void addLog(String log) {
 		addlog.add(log);
-		System.out.println("명령어 : "+log);
 		
 	}	
 }

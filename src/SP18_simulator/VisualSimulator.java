@@ -18,10 +18,12 @@ import java.awt.*;
  * 실제적인 작업은 SicSimulator에서 수행하도록 구현한다.
  */
 public class VisualSimulator {
-	ResourceManager resourceManager = new ResourceManager();
-	SicLoader sicLoader = new SicLoader(resourceManager);
-	SicSimulator sicSimulator = new SicSimulator(resourceManager);
+	ResourceManager rm = new ResourceManager();
+	SicLoader sicLoader = new SicLoader(rm);
+	SicSimulator sicSimulator = new SicSimulator(rm);
 	ArrayList<String> objcode = new ArrayList<String>();
+	static MyFrame myframe = new MyFrame();
+
 	/**
 	 * 프로그램 로드 명령을 전달한다.
 	 */
@@ -39,6 +41,11 @@ public class VisualSimulator {
 		sicSimulator.oneStep();
 		update();
 		}
+		else {
+			myframe.btRunstep.setEnabled(false);
+		}
+		
+
 	};
 
 	/**
@@ -54,23 +61,43 @@ public class VisualSimulator {
 	 * 화면을 최신값으로 갱신하는 역할을 수행한다.
 	 */
 	public void update(){
+		myframe.aDec.setText(Integer.toString(rm.register[0]));
+		
+		myframe.aHex.setText(String.format("%06X", rm.register[0]));	
+		myframe.xDec.setText(Integer.toString(rm.register[1]));
+		myframe.xHex.setText(String.format("%06X", rm.register[1]));			
+		myframe.lDec.setText(Integer.toString(rm.register[2]));
+		myframe.lHex.setText(String.format("%06X", rm.register[2]));		
+		myframe.pcDec.setText(Integer.toString(rm.register[8]));
+		myframe.pcHex.setText(String.format("%06X", rm.register[8]));	
+		myframe.tfSW.setText(String.format("%06X", rm.register[9]));	
+		myframe.bDec.setText(Integer.toString(rm.register[3]));
+		myframe.bHex.setText(String.format("%06X", rm.register[3]));	
+		myframe.sDec.setText(Integer.toString(rm.register[4]));
+		myframe.sHex.setText(String.format("%06X", rm.register[4]));			
+		myframe.tDec.setText(Integer.toString(rm.register[5]));
+		myframe.tHex.setText(String.format("%06X", rm.register[5]));	
+		myframe.fDec.setText(Integer.toString(rm.register[6]));
+		myframe.fHex.setText(String.format("%06X", rm.register[6]));	
+		myframe.tfSaddrM.setText(String.format("%06X", rm.startAddr.get(0)));	
+		myframe.tfEAddr.setText(String.format("%06X", Integer.parseInt(rm.progLength.get(0),16)));
 		
 	};
 	
 
 	public static void main(String[] args) {
-		MyFrame myframe = new MyFrame();
+		
 		myframe.setVisible(true);
 	}
 }
 class MyFrame extends JFrame {
 	VisualSimulator visual = new VisualSimulator();
-	private JPanel contentPane;
-	private JTextField tfName, tfpName, tfHaddr, tfpLength;
-	private JTextField aDec, aHex, xDec, xHex, lDec, lHex, pcDec, pcHex, tfSW;
-	private JTextField bDec, bHex, sDec, sHex, tDec, tHex, fDec, fHex;
-	private JTextField tfEAddr, tfSaddrM, tfTaddr, tfDevice;
-	private JButton btRunstep,btRunall;
+	JPanel contentPane;
+	JTextField tfName, tfpName, tfHaddr, tfpLength;
+	JTextField aDec, aHex, xDec, xHex, lDec, lHex, pcDec, pcHex, tfSW;
+	JTextField bDec, bHex, sDec, sHex, tDec, tHex, fDec, fHex;
+	JTextField tfEAddr, tfSaddrM, tfTaddr, tfDevice;
+	JButton btRunstep,btRunall;
 
 	public MyFrame() {
 		this.setResizable(false);
@@ -405,13 +432,16 @@ class MyFrame extends JFrame {
 		contentPane.add(lbLog);
 		
 		JList listinst = new JList();
-		
+		JScrollPane scroll = new JScrollPane();
+		scroll.setViewportView(listinst);
+		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		listinst.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		listinst.setBounds(263, 235, 109, 229);
 		contentPane.add(listinst);
 		
 		JList listLog = new JList(new DefaultListModel());
 		DefaultListModel model = (DefaultListModel) listLog.getModel();
+//		model.addElement(SicSimulator.addlog);
 //		listLog.add(new JScrollPane(listLog),"Center");
 		
 		listLog.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
