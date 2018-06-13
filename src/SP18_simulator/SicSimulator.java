@@ -67,6 +67,7 @@ public class SicSimulator {
 
 			String opcode = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & opFlag).toUpperCase();
 			opcode = String.format("%02X", Integer.parseInt(opcode,16));
+			
 			boolean n = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x02) == 0x02;
 			boolean i = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x01) == 0x01;
 			boolean x = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x80) == 0x80;
@@ -74,9 +75,9 @@ public class SicSimulator {
 			boolean p = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x20) == 0x20;
 			boolean e = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x10) == 0x10;
 
-			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[0]));
-			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[1]));
-			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[2]));
+//			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[0]));
+//			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[1]));
+//			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[2]));
 
 
 			int m=0;
@@ -179,17 +180,15 @@ public class SicSimulator {
 				
 			case "E0": //TD
 				mem = rMgr.charToInt(rMgr.getMemory(ta, 1));
-
+//				rMgr.setRegister(regSW, 0);
 				rMgr.testDevice(Integer.toHexString(mem));
 				rMgr.setRegister(regPC, pc);
 				addLog("TD");
 				break;
 				
 			case "30": //JEQ
-//				rMgr.setRegister(regSW,-1);
 				if(rMgr.getRegister(regSW)==-1) {
-//				if(cc==-1) {
-					ta = pc+disp;
+
 					rMgr.setRegister(regPC, ta);
 				}
 					rMgr.setRegister(regPC, pc);
@@ -221,8 +220,6 @@ public class SicSimulator {
 			case "54": //STCH             A 오른쪽 어디갔냐?????????????????????
 //					System.out.println(rMgr.getRegister(text));
 					rMgr.setMemory(m, rMgr.intToChar(rMgr.getRegister(regA), 1));
-//					System.out.println(m);
-//					System.out.println((int)rMgr.getMemory(m, 3)[0]);
 					rMgr.setRegister(regPC, pc);
 					charmem = m;
 //					System.out.println(charmem);
@@ -253,12 +250,10 @@ public class SicSimulator {
 					break;
 					
 			case "38": //JLT
-//					if(cc==-1) {
 				if(rMgr.getRegister(regSW)==-1) {
 						rMgr.setRegister(regPC, pc);
 					}
 					else {
-						ta = pc+disp;
 						rMgr.setRegister(regPC, ta);
 					}
 					addLog("JLT");
@@ -311,12 +306,10 @@ public class SicSimulator {
 				break;
 				
 			case "3C": //J
-				System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[0]));
-				System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[1]));
-				System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[2]));
-
+				
+				System.out.println("주소 : "+rMgr.getRegister(regPC));
 //				System.out.println("n : "+n+" i : "+ i);
-//				rMgr.setRegister(regPC, ??));
+				rMgr.setRegister(regPC, ta);
 				addLog("J");
 				break;
 				
