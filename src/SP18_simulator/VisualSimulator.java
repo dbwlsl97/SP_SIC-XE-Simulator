@@ -43,6 +43,8 @@ public class VisualSimulator {
 	 * 남아있는 모든 명령어를 수행할 것을 SicSimulator에 요청한다.
 	 */
 	public void allStep(){
+		sicSimulator.allStep();
+		update();
 		
 	};
 	
@@ -406,7 +408,10 @@ class MyFrame extends JFrame {
 		listinst.setBounds(263, 235, 109, 229);
 		contentPane.add(listinst);
 		
-		JList listLog = new JList();
+		JList listLog = new JList(new DefaultListModel());
+		DefaultListModel model = (DefaultListModel) listLog.getModel();
+//		listLog.add(new JScrollPane(listLog),"Center");
+		
 		listLog.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		listLog.setBounds(18, 508, 463, 116);
 		contentPane.add(listLog);

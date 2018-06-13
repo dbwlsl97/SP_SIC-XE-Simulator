@@ -151,23 +151,27 @@ public class SicLoader {
 			    	c = rMgr.memory[pacount + 2];
 		    	}
 		    
-		    	chickenSum |= a << 16;
-		    	chickenSum |= b << 8;
-		    	chickenSum |= c;
-		    	
+//		    	chickenSum |= a << 16;
+//		    	chickenSum |= b << 8;
+//		    	chickenSum |= c;
+//		    	System.out.println("chickenSum :"+chickenSum);
 		    	if(zerocount == '5')
 		    	{
 		    		if(mcode.get(i).charAt(9) == '+')
-		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (symAddres + chickenSum) , 2));
+//		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (symAddres + chickenSum) , 2));
+		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (symAddres) , 2));
 		    		if(mcode.get(i).charAt(9) == '-')
-		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (-symAddres + chickenSum) , 2));
+		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (symAddres) , 2));
+//		    			rMgr.setMemory((pacount + 1 ) ,rMgr.intToChar( (-symAddres + chickenSum) , 2));
 		    	}
 		    	if(zerocount == '6')
 		    	{
 		    		if(mcode.get(i).charAt(9) == '+')
-		    			rMgr.setMemory(pacount  ,rMgr.intToChar( symAddres + chickenSum , 3));
+		    			rMgr.setMemory((pacount) ,rMgr.intToChar( (symAddres) , 3));
+//		    			rMgr.setMemory(pacount  ,rMgr.intToChar( symAddres + chickenSum , 3));
 		    		if(mcode.get(i).charAt(9) == '-')
-		    			rMgr.setMemory(pacount ,rMgr.intToChar( - symAddres + chickenSum , 3));
+		    			rMgr.setMemory((pacount) ,rMgr.intToChar( (symAddres) , 3));
+//		    			rMgr.setMemory(pacount ,rMgr.intToChar( - symAddres + chickenSum , 3));
 		    	}
 		    		    
 		    	}

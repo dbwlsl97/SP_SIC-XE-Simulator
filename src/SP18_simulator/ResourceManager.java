@@ -84,6 +84,7 @@ public class ResourceManager{
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			setRegister(ssm.regSW, -1);
+			
 			e.printStackTrace();
 		}
 		}
@@ -94,28 +95,14 @@ public class ResourceManager{
 	 * @param devName 디바이스의 이름
 	 * @return 가져온 데이터
 	 */
-//	public char readDevice(String devName){
-//	      FileChannel fc = (FileChannel)deviceManager.get(devName);
-//	      ByteBuffer buffer = ByteBuffer.allocate(1);
-//	      device = devName;
-//	      try {
-//	         noOfBytesRead  = fc.read(buffer);
-//	         buffer.flip();
-//	         if(noOfBytesRead == -1)
-//	            return 0;
-//	      } catch (IOException e) {
-//	         // TODO Auto-generated catch block
-//	         e.printStackTrace();
-//	      }
-//	      return (char)buffer.get();
-//	   }
+
 	public char readDevice(String devName){
 		
 			FileChannel fc = (FileChannel)deviceManager.get(devName);
 			ByteBuffer buf = ByteBuffer.allocate(1);
-	       
 	        try {
 	        	byteCount = fc.read(buf);
+//	        	setRegister(ssm.regSW,0);
 	        	buf.flip();	   
 	            if (byteCount == -1) {
 	            	return 0;
@@ -137,19 +124,16 @@ public class ResourceManager{
 	public void writeDevice(String devName, char data){
 		
 		FileChannel fc = (FileChannel)deviceManager.get(devName);
-		Charset charset;
-		ByteBuffer buf;
+	//	Charset charset;
+//		ByteBuffer buf;
+		try {
+			ByteBuffer buf = Charset.defaultCharset().encode(Character.toString(data));
+			fc.write(buf);
 
-
-//		try {
-//			charset = Charset.defaultCharset();
-//			buf = charset.encode(String.valueOf(data));
-//			fc.write(buf);
-//
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	
