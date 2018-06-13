@@ -3,6 +3,8 @@ package SP18_simulator;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.plaf.synth.SynthSpinnerUI;
+
 /**
  * 시뮬레이터로서의 작업을 담당한다. VisualSimulator에서 사용자의 요청을 받으면 이에 따라
  * ResourceManager에 접근하여 작업을 수행한다.  
@@ -59,19 +61,24 @@ public class SicSimulator {
 	 */
 	public void oneStep() {
 		int charmem = 0;
+		char text = 0;
 		int pc=0; // 현재 명령어의 PC Address
 		boolean jump = false;
 
 			String opcode = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & opFlag).toUpperCase();
-			opcode = String.format("%02X", Integer.parseInt(opcode,16));		
+			opcode = String.format("%02X", Integer.parseInt(opcode,16));
 			boolean n = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x02) == 0x02;
 			boolean i = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x01) == 0x01;
 			boolean x = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x80) == 0x80;
 			boolean b = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x40) == 0x40;
 			boolean p = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x20) == 0x20;
 			boolean e = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x10) == 0x10;
-			
-			byte calbyte = 0;
+
+			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[0]));
+			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[1]));
+			System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[2]));
+
+
 			int m=0;
 			int r1=0, r2=0;
 			
@@ -79,13 +86,14 @@ public class SicSimulator {
 			int ta=0; // Target Address
 
 			int disp = 0; // 현재 object code 의 displacement
-			char text = 0;
+			
 	
 			if(e) {
 				
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 16;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff) << 8;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+3, 1)[0] & 0xff);
+				
 				if(disp>10000) {
 					disp =0;
 				}
@@ -96,41 +104,37 @@ public class SicSimulator {
 				}
 
 				if(x) {
-//					System.out.println("regX : "+regX);
-//					if(m>2048) {
-//						m -= 4096;
-//					}
-
 					m += rMgr.getRegister(regX);
-
-//					System.out.println("m : "+m);
 				}
-
 			}
 			else if(p) {
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
-
-//				System.out.println("disp : "+disp);
 				pc = rMgr.getRegister(regPC)+3;
-				ta = disp + pc;
 				if(disp>2048) {
-					disp -= 4096;
+					ta = pc+ (disp-4096);
+				}
+				else {
+					ta = pc+disp;
 				}
 
 			}			
-			else if(n) {
-				//간접
-				ta = rMgr.getRegister(rMgr.getRegister(disp));
-//				System.out.println("ta is :"+ta);
-			}
-			else if(!n && i) {
+
+			if(!n && i) {
 				//직접
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
 				ta = disp;
 				rMgr.setMemory(disp, rMgr.intToChar(ta, 3));
 				pc = rMgr.getRegister(regPC)+3;
+			}
+			else if(n && !i) {
+				//간접
+//				ta = rMgr.getRegister(rMgr.getRegister(disp));
+				System.out.println("disp : "+disp);
+				ta = rMgr.getMemory(disp, 3)[0];
+//				System.out.println("where? :"+rMgr.getRegister(disp));
+				System.out.println("ta is :"+ta);
 			}
 
 			switch(opcode) {
@@ -221,14 +225,14 @@ public class SicSimulator {
 //					System.out.println((int)rMgr.getMemory(m, 3)[0]);
 					rMgr.setRegister(regPC, pc);
 					charmem = m;
-					System.out.println(charmem);
+//					System.out.println(charmem);
 					addLog("STCH");
 					break;
 					
 			case "50": //LDCH
 
 				mem = rMgr.getMemory(rMgr.getRegister(regA), 3)[0];
-				System.out.println("mem is "+mem);
+//				System.out.println("mem is "+mem);
 				rMgr.setRegister(regA, mem);
 				rMgr.setRegister(regPC, pc);
 								
@@ -307,6 +311,11 @@ public class SicSimulator {
 				break;
 				
 			case "3C": //J
+				System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[0]));
+				System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[1]));
+				System.out.println(Integer.toHexString((int)rMgr.getMemory(rMgr.getRegister(regPC), 3)[2]));
+
+//				System.out.println("n : "+n+" i : "+ i);
 //				rMgr.setRegister(regPC, ??));
 				addLog("J");
 				break;
