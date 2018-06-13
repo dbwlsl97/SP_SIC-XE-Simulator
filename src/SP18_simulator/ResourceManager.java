@@ -36,7 +36,7 @@ public class ResourceManager{
 	 * 이것도 복잡하면 알아서 구현해서 사용해도 괜찮습니다.
 	 */
 	SicSimulator ssm = new SicSimulator(this);
-	FileChannel filechannel;
+	FileChannel filechannel, fc;
 	int byteCount = 0;
 	HashMap<String,Object> deviceManager = new HashMap<String,Object>();
 	char[] memory = new char[65536]; // String으로 수정해서 사용하여도 무방함.
@@ -62,7 +62,13 @@ public class ResourceManager{
 	 * 프로그램을 종료하거나 연결을 끊을 때 호출한다.
 	 */
 	public void closeDevice() {
-		
+		try {
+			fc.close();
+			filechannel.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -86,6 +92,7 @@ public class ResourceManager{
 			setRegister(ssm.regSW, -1);
 			
 			e.printStackTrace();
+			
 		}
 		}
 	}
@@ -98,11 +105,10 @@ public class ResourceManager{
 
 	public char readDevice(String devName){
 		
-			FileChannel fc = (FileChannel)deviceManager.get(devName);
+			fc = (FileChannel)deviceManager.get(devName);
 			ByteBuffer buf = ByteBuffer.allocate(1);
 	        try {
 	        	byteCount = fc.read(buf);
-//	        	setRegister(ssm.regSW,0);
 	        	buf.flip();	   
 	            if (byteCount == -1) {
 	            	return 0;
@@ -123,9 +129,7 @@ public class ResourceManager{
 	 */
 	public void writeDevice(String devName, char data){
 		
-		FileChannel fc = (FileChannel)deviceManager.get(devName);
-	//	Charset charset;
-//		ByteBuffer buf;
+		fc = (FileChannel)deviceManager.get(devName);
 		try {
 			ByteBuffer buf = Charset.defaultCharset().encode(Character.toString(data));
 			fc.write(buf);

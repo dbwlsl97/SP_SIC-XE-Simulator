@@ -35,8 +35,10 @@ public class VisualSimulator {
 	 * 하나의 명령어만 수행할 것을 SicSimulator에 요청한다.
 	 */
 	public void oneStep(){
+		if(sicSimulator.jump==false) {
 		sicSimulator.oneStep();
 		update();
+		}
 	};
 
 	/**
