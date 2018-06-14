@@ -21,6 +21,7 @@ import javax.swing.plaf.synth.SynthSpinnerUI;
  */
 public class SicSimulator {
 	ResourceManager rMgr;
+	VisualSimulator visual;
 	public static final int opFlag = 0xFC;
 	public static final int regA = 0;
 	public static final int regX = 1;
@@ -32,10 +33,9 @@ public class SicSimulator {
 	public static final int regPC = 8;
 	public static final int regSW = 9;
 	
-	ArrayList<String> addlog = new ArrayList<String>();
-	boolean jump = false;
+	boolean jump = false; // jump해서 처음 시작주소로 갔을 때 구분하는 변수
 	int mem =0; //현재 objectcode 에서 가져 온 memory
-	int cc =0; // JEQ, JGT, JLT 할 때 가져와서 비교하는 regSW 의 값
+	int target =0; //target address 
 	public SicSimulator(ResourceManager resourceManager) {
 		// 필요하다면 초기화 과정 추가
 		this.rMgr = resourceManager;		
@@ -55,12 +55,14 @@ public class SicSimulator {
 	 */
 	public void oneStep() {
 			
-			char text = 0;
+			char text = 0; // COPY 할 TEXT 저장하는 변수
 			int pc=0; // 현재 명령어의 PC Address
+			int objcode =0; 
 			/* memory 에서 opcode 따오기 */
 			String opcode = Integer.toHexString(rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & opFlag).toUpperCase();
 			opcode = String.format("%02X", Integer.parseInt(opcode,16));
-
+			
+			/* 가능한 n i x b p e 연산을 미리하고 opcode에 따라서 메모리나 레지스터 값 설정한다 */
 			boolean n = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x02) == 0x02;
 			boolean i = (rMgr.getMemory(rMgr.getRegister(regPC), 1)[0] & 0x01) == 0x01;
 			boolean x = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x80) == 0x80;
@@ -68,80 +70,84 @@ public class SicSimulator {
 			boolean p = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x20) == 0x20;
 			boolean e = (rMgr.getMemory(rMgr.getRegister(regPC) + 1, 1)[0] & 0x10) == 0x10;
 
-			int m=0;
-			int r1=0, r2=0;			
-			int ta=0; // Target Address
+			int m=0; // ex) STL RETADR 중, m = RETADR
+			int r1=0, r2=0; //register r1, r2 (2형식 명령어 처리할 때 사용)
+			int ta=0; // Target Address 
 			int disp = 0; // 현재 object code 의 displacement
-			
-	
-			if(e) {			
+			int format =0; // 명령어 format
+				
+			if(e) {	
+				format = 4;
+				
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 16;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff) << 8;
 				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+3, 1)[0] & 0xff);
 				
-				if(disp>10000) {
-					disp =0;
-				}
-				else {
 				m = disp;
 				ta = m;
-				pc = rMgr.getRegister(regPC)+4;
-				}
-				if(x) {
+				pc = rMgr.getRegister(regPC)+format;
+				if(x) { 
 					m += rMgr.getRegister(regX);
 				}
 			}
-			else if(p) {
-				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
-				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
-				pc = rMgr.getRegister(regPC)+3;
-				if(disp>2048) {
-					ta = pc+ (disp-4096);
-				}
-				else {
-					ta = pc+disp;
-				}
-			}			
+			else {
+				format = 3;		
+				
+				if(p) {
+					disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
+					disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
+					pc = rMgr.getRegister(regPC)+format;
+					if(disp>2048) {
+						ta = pc+ (disp-4096);
+					}
+					else {
+						ta = pc+disp;
+					}
 
-			if(!n && i) {
-				//직접
-				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
-				disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
-				ta = disp;
-				rMgr.setMemory(disp, rMgr.intToChar(ta, 3));
-				pc = rMgr.getRegister(regPC)+3;
+				}			
+				if(!n && i) {
+					//직접
+					disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0] & 0x0f) << 8;
+					disp |= (rMgr.getMemory(rMgr.getRegister(regPC)+2, 1)[0] & 0xff);
+					ta = disp;
+					rMgr.setMemory(disp, rMgr.intToChar(ta, 3));
+					pc = rMgr.getRegister(regPC)+format;
+				}
+				else if(n && !i) {
+					//간접
+					ta = rMgr.charToInt(rMgr.getMemory(disp, 3));
+					}
 			}
-			else if(n && !i) {
-				//간접
-				ta = rMgr.charToInt(rMgr.getMemory(disp, 3));
-			}
+			/* Instructions JList 에 넣을 objcode 가져오기 */
+			objcode = rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC), format));
+			
 			switch(opcode) {
 			case "14": // STL
-			
+
 				rMgr.setMemory(ta, rMgr.intToChar(regL, 3));
 				rMgr.setRegister(regPC, pc);				
 				addLog("STL");
 				break;
 				
 			case "48" : //JSUB
-			
 				rMgr.setRegister(regL, pc);
 				rMgr.setRegister(regPC, m);
 				addLog("JSUB");
 				break;
 				
 			case "B4" : //CLEAR
-
+				format = 2;
+				objcode = rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC), format));
 				r1 = (rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)[0]) >> 4;	
 				rMgr.setRegister(r1, 0);			
-				pc = rMgr.getRegister(regPC)+2;
+				pc = rMgr.getRegister(regPC)+format;
 				rMgr.setRegister(regPC, pc);
 				
 				addLog("CLEAR");
 				break;		
 				
 			case "74": //LDT
-					mem = rMgr.charToInt(rMgr.getMemory(ta, 3));
+				mem = rMgr.charToInt(rMgr.getMemory(ta, 3));
 				rMgr.setRegister(regT, mem);
 				rMgr.setRegister(regPC, pc);
 				addLog("LDT");
@@ -155,7 +161,7 @@ public class SicSimulator {
 				addLog("TD");
 				break;				
 				
-			case "D8": //RD 
+			case "D8": //RD 	
 				text = rMgr.readDevice(Integer.toHexString(mem));
 				rMgr.setRegister(regA, text);	
 				rMgr.setRegister(regPC, pc);
@@ -163,6 +169,8 @@ public class SicSimulator {
 				break;
 				
 			case "A0": //COMPR
+				format = 2;
+				objcode = rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC), format));
 				r1 = rMgr.getRegister(rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC)+1, 1))>>4);
 				r2 = rMgr.getRegister(rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC)+1, 1)) & 0x0f);
 				pc = rMgr.getRegister(regPC)+2;
@@ -175,7 +183,7 @@ public class SicSimulator {
 				else {
 					rMgr.setRegister(regSW, 1);
 				}
-				pc = rMgr.getRegister(regPC)+2;
+				pc = rMgr.getRegister(regPC)+format;
 				rMgr.setRegister(regPC, pc);
 				
 				addLog("COMPR");
@@ -197,25 +205,26 @@ public class SicSimulator {
 				break;
 				
 			case "B8": //TIXR	
-					rMgr.setRegister(regX, rMgr.getRegister(regX)+1);
-					if(rMgr.getRegister(regX)==rMgr.getRegister(regT)) {
-						rMgr.setRegister(regSW, 0);
-					}
-					else if(rMgr.getRegister(regX)<rMgr.getRegister(regT)) {
-						rMgr.setRegister(regSW, -5);
-					}
-					else {
-						rMgr.setRegister(regSW, 5);
-					}
-					
-					pc = rMgr.getRegister(regPC)+2;
-					rMgr.setRegister(regPC, pc);
-					
-					addLog("TIXR");
-					break;
+				format = 2;
+				objcode = rMgr.charToInt(rMgr.getMemory(rMgr.getRegister(regPC), format));
+				rMgr.setRegister(regX, rMgr.getRegister(regX)+1);
+				if(rMgr.getRegister(regX)==rMgr.getRegister(regT)) {
+					rMgr.setRegister(regSW, 0);
+				}
+				else if(rMgr.getRegister(regX)<rMgr.getRegister(regT)) {
+					rMgr.setRegister(regSW, -5);
+				}
+				else {
+					rMgr.setRegister(regSW, 5);
+				}
+				
+				pc = rMgr.getRegister(regPC)+format;
+				rMgr.setRegister(regPC, pc);
+				
+				addLog("TIXR");
+				break;
 					
 			case "30": //JEQ
-				
 				if((rMgr.getRegister(regSW))==0) {
 					rMgr.setRegister(regPC, ta);
 				}
@@ -276,25 +285,30 @@ public class SicSimulator {
 				addLog("COMP");
 				break;
 				
-			case "DC": //WD
+			case "DC": //WD	
 				rMgr.writeDevice(Integer.toHexString((int)rMgr.getMemory(ta, 1)[0]), (char)(rMgr.getRegister(regA) & 0xff));
 				rMgr.setRegister(regPC,pc);
 				addLog("WD");
 				break;
 				
 			case "3C": //J
-				
 				rMgr.setRegister(regPC, ta);
 				addLog("J");
 				
-				if(rMgr.getRegister(regPC)==0) {
+				if(rMgr.getRegister(regPC)==0) { // regPC 가 0을 가리킬 때, jump 변수를 true로 변경하고, 프로그램을 종료함
 					jump = true;
 					rMgr.closeDevice();
 				}
 				break;
 			}
+			/* objcode가 0부터 시작하는 objcode 구분해서 알맞게 넣어주기 */
+			if((Integer.parseInt(opcode,16) & 0xf0) == 0) {
+				addInst("0"+String.format("%X", objcode));
+			}
+			else
+				addInst(String.format("%X", objcode));
 			
-		
+			target = ta;
 	}
 	
 	/**
@@ -307,10 +321,16 @@ public class SicSimulator {
 	}
 	
 	/**
-	 * 각 단계를 수행할 때 마다 관련된 기록을 남기도록 한다.
+	 * 명령어마다 Log 넣은 거 Log JList에 추가하기
 	 */
 	public void addLog(String log) {
-		addlog.add(log);
-		
-	}	
+		visual.myframe.instModel.addElement(log);
+	}
+	
+	/**
+	 * 명령어마다 objcode opcode JList에 추가하기
+	 */
+	public void addInst(String opcode) {
+		visual.myframe.opcodeModel.addElement(opcode);
+	}
 }

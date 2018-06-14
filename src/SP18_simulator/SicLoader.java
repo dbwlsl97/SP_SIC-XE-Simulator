@@ -23,7 +23,6 @@ public class SicLoader {
 	SymbolTable symtab;
 	ArrayList<String> mcode = new ArrayList<String>();
 	ArrayList<Integer> mcodeAddress = new ArrayList<Integer>();
-	ArrayList<Integer> section = new ArrayList<Integer>();
 	int currentSection;
 	int pacount=0;
 	public SicLoader(ResourceManager resourceManager) {
@@ -59,6 +58,7 @@ public class SicLoader {
 		      
 		      while((line = br.readLine()) != null){
 		    	  if(line.length() != 0) {
+		    		/* input.obj에서 읽으면서 앞글자 H, T, M로 구분해서 로딩 처리 */
 				    switch(line.charAt(0)) {
 				    case 'H':
 				    	name = line.substring(1).split("\t");
@@ -115,7 +115,6 @@ public class SicLoader {
 			
 				    	break;
 				    case 'E':
-				    	
 				    	secaddr += Integer.parseInt(rMgr.progLength.get(currentSection),16);
 				    	currentSection++;
 				    	
@@ -128,26 +127,15 @@ public class SicLoader {
 		      e.printStackTrace();
 		    }
 		    //pass 2
-		    int zerocount=0; // 채워야할 0 개수 세기
+		    /* Modification 처리 */
+		    int zerocount=0; // 채워야할 0 개수 세서 개수에 따라 처리해줌
 			int nowAddress;
 		    for(int i=0;i<mcode.size();i++) {
-		    	int a=0, b=0 , c=0;
 		    	nowAddress = mcodeAddress.get(i);
 		    	pacount = Integer.parseInt((mcode.get(i).substring(5,7)),16);
 		    	pacount += nowAddress;
 		    	int symAddres = symtab.search(mcode.get(i).substring(10));
-		    
 		    	zerocount = (mcode.get(i).charAt(8));
-		    	if(zerocount=='5') {
-		    		b = rMgr.memory[pacount + 1];
-			    	c = rMgr.memory[pacount + 2];
-		    	}
-		    	else if(zerocount == '6')
-		    	{
-		    		a = rMgr.memory[pacount];
-			    	b = rMgr.memory[pacount + 1];
-			    	c = rMgr.memory[pacount + 2];
-		    	}
 		    
 		    	if(zerocount == '5')
 		    	{

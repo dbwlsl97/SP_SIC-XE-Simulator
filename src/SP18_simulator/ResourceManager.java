@@ -37,7 +37,7 @@ public class ResourceManager{
 	 */
 	SicSimulator ssm = new SicSimulator(this);
 	FileChannel filechannel, fc;
-	int byteCount = 0;
+	int byteCount = 0; // copy 할 text byte 세는 변수
 	HashMap<String,Object> deviceManager = new HashMap<String,Object>();
 	char[] memory = new char[65536]; // String으로 수정해서 사용하여도 무방함.
 	int[] register = new int[10];
@@ -45,6 +45,7 @@ public class ResourceManager{
 	ArrayList<String> progName = new ArrayList<String>();
 	ArrayList<String> progLength = new ArrayList<String>();
 	ArrayList<Integer> startAddr = new ArrayList<Integer>();
+	String dev; // 사용 중인 디바이스 이름 구분 변수
 	// 이외에도 필요한 변수 선언해서 사용할 것.
 
 	/**
@@ -86,6 +87,7 @@ public class ResourceManager{
 					StandardOpenOption.WRITE
 
 					);
+			dev = String.format("%02X", Integer.parseInt(devName,16));
 			deviceManager.put(devName, filechannel);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -113,6 +115,7 @@ public class ResourceManager{
 	            if (byteCount == -1) {
 	            	return 0;
 	            }
+	            dev = String.format("%02X", Integer.parseInt(devName,16));
 	        } catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -133,7 +136,7 @@ public class ResourceManager{
 		try {
 			ByteBuffer buf = Charset.defaultCharset().encode(Character.toString(data));
 			fc.write(buf);
-
+			dev = String.format("%02X", Integer.parseInt(devName,16));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -231,7 +234,6 @@ public class ResourceManager{
 	}
 
 	public void setStartADDR(int startaddr) {
-//		System.out.println(startaddr);
 		startAddr.add(startaddr);
 		// TODO Auto-generated method stub
 		

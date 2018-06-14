@@ -7,6 +7,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.awt.event.*;
@@ -21,9 +23,8 @@ public class VisualSimulator {
 	ResourceManager rm = new ResourceManager();
 	SicLoader sicLoader = new SicLoader(rm);
 	SicSimulator sicSimulator = new SicSimulator(rm);
-	ArrayList<String> objcode = new ArrayList<String>();
 	static MyFrame myframe = new MyFrame();
-
+	
 	/**
 	 * 프로그램 로드 명령을 전달한다.
 	 */
@@ -37,14 +38,10 @@ public class VisualSimulator {
 	 * 하나의 명령어만 수행할 것을 SicSimulator에 요청한다.
 	 */
 	public void oneStep(){
-		if(sicSimulator.jump==false) {
+		if(sicSimulator.jump==false) { // Program이 끝날 때까지 수행
 		sicSimulator.oneStep();
 		update();
 		}
-		else {
-			myframe.btRunstep.setEnabled(false);
-		}
-		
 
 	};
 
@@ -60,9 +57,8 @@ public class VisualSimulator {
 	/**
 	 * 화면을 최신값으로 갱신하는 역할을 수행한다.
 	 */
-	public void update(){
-		myframe.aDec.setText(Integer.toString(rm.register[0]));
-		
+	public void update(){ 
+		myframe.aDec.setText(Integer.toString(rm.register[0]));	
 		myframe.aHex.setText(String.format("%06X", rm.register[0]));	
 		myframe.xDec.setText(Integer.toString(rm.register[1]));
 		myframe.xHex.setText(String.format("%06X", rm.register[1]));			
@@ -79,8 +75,9 @@ public class VisualSimulator {
 		myframe.tHex.setText(String.format("%06X", rm.register[5]));	
 		myframe.fDec.setText(Integer.toString(rm.register[6]));
 		myframe.fHex.setText(String.format("%06X", rm.register[6]));	
-		myframe.tfSaddrM.setText(String.format("%06X", rm.startAddr.get(0)));	
-		myframe.tfEAddr.setText(String.format("%06X", Integer.parseInt(rm.progLength.get(0),16)));
+
+		myframe.tfTaddr.setText(String.format("%06X", sicSimulator.target));
+		myframe.tfDevice.setText(rm.dev);
 		
 	};
 	
@@ -98,8 +95,13 @@ class MyFrame extends JFrame {
 	JTextField bDec, bHex, sDec, sHex, tDec, tHex, fDec, fHex;
 	JTextField tfEAddr, tfSaddrM, tfTaddr, tfDevice;
 	JButton btRunstep,btRunall;
+	
+	/* JList 에 추가하기 위해 필요한 Model 변수 선언 */
+	DefaultListModel instModel; 
+	DefaultListModel opcodeModel;
 
-	public MyFrame() {
+
+	public MyFrame() { // 전체적인 GUI 설정
 		this.setResizable(false);
 		setTitle("SIC/XE Simulator");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -431,29 +433,29 @@ class MyFrame extends JFrame {
 		lbLog.setBounds(20, 487, 141, 15);
 		contentPane.add(lbLog);
 		
-		JList listinst = new JList();
-		JScrollPane scroll = new JScrollPane();
-		scroll.setViewportView(listinst);
-		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		opcodeModel = new DefaultListModel(); 
+		JList<String> listinst = new JList<String>();
+		listinst.setModel(opcodeModel);
 		listinst.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		listinst.setBounds(263, 235, 109, 229);
-		contentPane.add(listinst);
+		listinst.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);	
 		
-		JList listLog = new JList(new DefaultListModel());
-		DefaultListModel model = (DefaultListModel) listLog.getModel();
-//		model.addElement(SicSimulator.addlog);
-//		listLog.add(new JScrollPane(listLog),"Center");
-		
-		listLog.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
-		listLog.setBounds(18, 508, 463, 116);
-		contentPane.add(listLog);
-		
-		JScrollPane instScroll = new JScrollPane();
-		instScroll.setBounds(351, 235, 20, 228);
+		JScrollPane instScroll = new JScrollPane(listinst);
+		instScroll.setBounds(263, 235, 109, 229);
+		instScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		contentPane.add(instScroll);
 		
-		JScrollPane logScroll = new JScrollPane();
-		logScroll.setBounds(457, 508, 24, 116);
+		instModel = new DefaultListModel();
+		JList<String> listLog = new JList<String>();
+		listLog.setModel(instModel);
+		listLog.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
+		listLog.setBounds(18, 508, 463, 116);
+		listLog.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		
+		
+		JScrollPane logScroll = new JScrollPane(listLog);
+		logScroll.setBounds(18, 508, 463, 116);
+		logScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		contentPane.add(logScroll);
 
 	}
@@ -462,6 +464,7 @@ class MyFrame extends JFrame {
 		OpenActionListener(){
 			chooser = new JFileChooser();
 		}
+		
 		public void actionPerformed(ActionEvent arg0) {
 			FileNameExtensionFilter filter = new FileNameExtensionFilter(
 					"Object File(*.obj)", "obj");
@@ -475,7 +478,8 @@ class MyFrame extends JFrame {
 			visual.load(chooser.getSelectedFile());
 			openUpdate();
 		}
-		void openUpdate(){
+		
+		void openUpdate(){ //처음 inpu.obj 파일 open하고 초기화할 내용 초기화 해줌
 			tfName.setText(chooser.getSelectedFile().getName());
 			if(tfName.getText()!="\0") {
 				btRunstep.setEnabled(true);
@@ -504,12 +508,11 @@ class MyFrame extends JFrame {
 				tHex.setText("0");
 				fDec.setText("0");
 				fHex.setText("0");
-				tfEAddr.setText("000000");
-				
+				tfEAddr.setText(String.format("%06X", visual.rm.startAddr.get(0)));				
 			}
 		}
 	}
-	
+
 }
 
 
